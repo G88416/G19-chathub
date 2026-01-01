@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Chat App</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
+    #auth { text-align: center; }
+    #chat { display: none; }
+    #messages { height: 400px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+    .message { margin: 10px 0; }
+    .self { text-align: right; color: blue; }
+    audio { width: 200px; }
+  </style>
+</head>
+<body>
+  <div id="auth">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button onclick="signup()">Sign Up</button>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="chat">
+    <h2>Chat with: <input id="partnerEmail" placeholder="Partner Email"> <button onclick="startChat()">Start Chat</button></h2>
+    <button onclick="startCall()">Start Voice Call</button> <button onclick="hangup()">Hang Up</button>
+    <div id="videoContainer">
+      <video id="localVideo" autoplay playsinline muted></video>
+      <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+    <div id="messages"></div>
+    <input type="text" id="textMsg" placeholder="Type message">
+    <button onclick="sendText()">Send Text</button>
+    <button onclick="startVoiceRecording()">Record Voice</button>
+    <button onclick="stopVoiceRecording()" disabled>Stop & Send</button>
+    <p id="recordingStatus"></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    // Paste your Firebase config here
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    let currentUser, partnerId, chatId, messagesRef;
+    let mediaRecorder, audioChunks = [];
+    let pc; // WebRTC peer connection
+    let localStream;
+
+    // Auth functions
+    function signup() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.createUserWithEmailAndPassword(email, password).catch(err => alert(err.message));
+    }
+
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('chat').style.display = 'block';
+      } else {
+        document.getElementById('auth').style.display = 'block';
+        document.getElementById('chat').style.display = 'none';
+      }
+    });
+
+    async function startChat() {
+      const partnerEmail = document.getElementById('partnerEmail').value;
+      const snapshot = await db.collection('users').where('email', '==', partnerEmail).get();
+      if (snapshot.empty) return alert('User not found - they need to login once');
+      snapshot.forEach(doc => partnerId = doc.id);
+
+      // Save user doc if not exists
+      await db.collection('users').doc(currentUser.uid).set({email: currentUser.email}, {merge: true});
+
+      chatId = [currentUser.uid, partnerId].sort().join('_');
+      messagesRef = db.collection('chats').doc(chatId).collection('messages');
+
+      loadMessages();
+    }
+
+    function loadMessages() {
+      document.getElementById('messages').innerHTML = '';
+      messagesRef.orderBy('timestamp').onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            displayMessage(change.doc.data());
+          }
+        });
+      });
+    }
+
+    function displayMessage(data) {
+      const div = document.createElement('div');
+      div.className = 'message ' + (data.senderId === currentUser.uid ? 'self' : '');
+      if (data.type === 'text') {
+        div.textContent = data.text;
+      } else if (data.type === 'voice') {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = data.url;
+        div.appendChild(audio);
+      }
+      document.getElementById('messages').appendChild(div);
+      div.scrollIntoView();
+    }
+
+    async function sendText() {
+      const text = document.getElementById('textMsg').value;
+      if (!text) return;
+      await messagesRef.add({
+        senderId: currentUser.uid,
+        type: 'text',
+        text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('textMsg').value = '';
+    }
+
+    // Voice Notes
+    async function startVoiceRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start();
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      document.querySelector('button[onclick="startVoiceRecording()"]').disabled = true;
+      document.querySelector('button[onclick="stopVoiceRecording()"]').disabled = false;
+      document.getElementById('recordingStatus').textContent = 'Recording...';
+    }
+
+    async function stopVoiceRecording() {
+      mediaRecorder.stop();
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, {type: 'audio/webm'});
+        const ref = storage.ref(`voice/${chatId}/${Date.now()}.webm`);
+        await ref.put(blob);
+        const url = await ref.getDownloadURL();
+
+        await messagesRef.add({
+          senderId: currentUser.uid,
+          type: 'voice',
+          url,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.querySelector('button[onclick="startVoiceRecording()"]').disabled = false;
+        document.querySelector('button[onclick="stopVoiceRecording()"]').disabled = true;
+        document.getElementById('recordingStatus').textContent = '';
+      };
+    }
+
+    // Voice Call with WebRTC
+    const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]};
+
+    async function startCall() {
+      pc = new RTCPeerConnection(configuration);
+      localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      document.getElementById('localVideo').srcObject = localStream;
+
+      pc.ontrack = e => document.getElementById('remoteVideo').srcObject = e.streams[0];
+
+      pc.onicecandidate = e => {
+        if (e.candidate) {
+          db.collection('chats').doc(chatId).collection('call').doc('candidate').collection('caller').add(e.candidate.toJSON());
+        }
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await db.collection('chats').doc(chatId).collection('call').doc('offer').set({offer});
+
+      // Listen for answer
+      db.collection('chats').doc(chatId).collection('call').doc('answer').onSnapshot(doc => {
+        if (doc.exists && !pc.currentRemoteDescription) {
+          pc.setRemoteDescription(new RTCSessionDescription(doc.data().answer));
+        }
+      });
+
+      // Listen for callee candidates
+      db.collection('chats').doc(chatId).collection('call').doc('candidate').collection('callee').onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        });
+      });
+    }
+
+    // To answer call (add button or auto-detect offer)
+    // Similar logic but create answer instead of offer, swap collections
+
+    function hangup() {
+      if (pc) pc.close();
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
+      // Clear call docs if needed
+    }
+
+  </script>
+</body>
+</html>
