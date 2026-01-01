@@ -225,6 +225,9 @@
           // Incoming call detected
           if (confirm('Incoming call. Answer?')) {
             await answerCall(doc.data().offer);
+          } else {
+            // User declined - clean up offer to prevent re-triggering
+            doc.ref.delete().catch(() => {});
           }
         }
       });
@@ -258,12 +261,17 @@
     }
 
     function hangup() {
-      if (pc) pc.close();
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      pc = null;
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
       document.getElementById('localVideo').srcObject = null;
       document.getElementById('remoteVideo').srcObject = null;
-      // Clear call docs if needed
+      // Clear call docs - errors ignored as they may not exist
       if (chatId) {
         db.collection('chats').doc(chatId).collection('call').doc('offer').delete().catch(() => {});
         db.collection('chats').doc(chatId).collection('call').doc('answer').delete().catch(() => {});
