@@ -106,6 +106,7 @@
       messagesRef = db.collection('chats').doc(chatId).collection('messages');
 
       loadMessages();
+      listenForCalls();
     }
 
     function loadMessages() {
@@ -215,13 +216,58 @@
       });
     }
 
-    // To answer call (add button or auto-detect offer)
-    // Similar logic but create answer instead of offer, swap collections
+    // Listen for incoming calls and auto-answer
+    async function listenForCalls() {
+      if (!chatId) return;
+      
+      db.collection('chats').doc(chatId).collection('call').doc('offer').onSnapshot(async doc => {
+        if (doc.exists && !pc) {
+          // Incoming call detected
+          if (confirm('Incoming call. Answer?')) {
+            await answerCall(doc.data().offer);
+          }
+        }
+      });
+    }
+
+    async function answerCall(offer) {
+      pc = new RTCPeerConnection(configuration);
+      localStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      document.getElementById('localVideo').srcObject = localStream;
+
+      pc.ontrack = e => document.getElementById('remoteVideo').srcObject = e.streams[0];
+
+      pc.onicecandidate = e => {
+        if (e.candidate) {
+          db.collection('chats').doc(chatId).collection('call').doc('candidate').collection('callee').add(e.candidate.toJSON());
+        }
+      };
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await db.collection('chats').doc(chatId).collection('call').doc('answer').set({answer});
+
+      // Listen for caller candidates
+      db.collection('chats').doc(chatId).collection('call').doc('candidate').collection('caller').onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+        });
+      });
+    }
 
     function hangup() {
       if (pc) pc.close();
       if (localStream) localStream.getTracks().forEach(t => t.stop());
+      pc = null;
+      document.getElementById('localVideo').srcObject = null;
+      document.getElementById('remoteVideo').srcObject = null;
       // Clear call docs if needed
+      if (chatId) {
+        db.collection('chats').doc(chatId).collection('call').doc('offer').delete().catch(() => {});
+        db.collection('chats').doc(chatId).collection('call').doc('answer').delete().catch(() => {});
+      }
     }
 
   </script>
