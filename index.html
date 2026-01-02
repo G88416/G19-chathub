@@ -323,6 +323,30 @@
     </div>
   </div>
 
+  <script>
+    // Global functions that need to be accessible from onclick handlers
+    window.toggleTheme = function() {
+      const current = document.body.getAttribute('data-bs-theme');
+      const newTheme = current === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+    };
+
+    window.scrollToBottom = function() {
+      const el = document.getElementById('messages');
+      el.scrollTop = el.scrollHeight;
+      document.querySelector('.scroll-to-bottom').classList.remove('show');
+    };
+
+    window.toggleEmojiPicker = function() {
+      document.getElementById('emojiPicker').classList.toggle('show');
+    };
+
+    // Restore theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-bs-theme', savedTheme);
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
@@ -377,10 +401,6 @@
       document.getElementById('emojiPicker').classList.remove('show');
     }
 
-    window.toggleEmojiPicker = () => {
-      document.getElementById('emojiPicker').classList.toggle('show');
-    };
-
     // Close emoji picker when clicking outside
     document.addEventListener('click', (e) => {
       const picker = document.getElementById('emojiPicker');
@@ -424,17 +444,6 @@
       }
       initEmojiPicker();
     });
-
-    function toggleTheme() {
-      const current = document.body.getAttribute('data-bs-theme');
-      const newTheme = current === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-    }
-
-    // Restore theme preference
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.body.setAttribute('data-bs-theme', savedTheme);
 
     window.signup = () => {
       const email = document.getElementById('email').value.trim();
@@ -504,7 +513,7 @@
             }
           }
         });
-        scrollToBottom();
+        window.scrollToBottom();
       });
       // Listen for typing status
       onSnapshot(doc(db, 'chats', chatId, 'status', 'typing'), snap => {
@@ -524,7 +533,7 @@
       div.className = 'typing-indicator';
       div.innerHTML = '<span></span><span></span><span></span>';
       document.getElementById('messages').appendChild(div);
-      scrollToBottom();
+      window.scrollToBottom();
     }
 
     function hideTypingIndicator() {
@@ -581,12 +590,6 @@
       }
       
       document.getElementById('messages').appendChild(div);
-    }
-
-    function scrollToBottom() {
-      const el = document.getElementById('messages');
-      el.scrollTop = el.scrollHeight;
-      document.querySelector('.scroll-to-bottom').classList.remove('show');
     }
 
     // Send typing status
