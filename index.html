@@ -12,7 +12,7 @@
     body { 
       min-height: 100vh; 
       transition: background-color 0.3s; 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
     #messages {
       height: 55vh;
@@ -379,9 +379,26 @@
     let localStream = null;
     let typingTimeout = null;
     let isTyping = false;
+    let audioContext = null;
 
     // Emoji picker data
-    const emojis = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','👍','👎','👋','🤚','✋','🖐️','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👏','🙌','👐','🤲','🤝','🙏','💪','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','🔥','✨','💫','⭐','🌟','💯','🎉','🎊','🎈','🎁','🏆','🥇','🥈','🥉'];
+    const emojis = [
+      '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇',
+      '🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚',
+      '😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩',
+      '🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣',
+      '😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬',
+      '🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗',
+      '🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯',
+      '😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐',
+      '🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','👍',
+      '👎','👋','🤚','✋','🖐️','👌','🤌','🤏','✌️','🤞',
+      '🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👏',
+      '🙌','👐','🤲','🤝','🙏','💪','❤️','🧡','💛','💚',
+      '💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓',
+      '💗','💖','💘','💝','🔥','✨','💫','⭐','🌟','💯',
+      '🎉','🎊','🎈','🎁','🏆','🥇','🥈','🥉'
+    ];
 
     // Initialize emoji picker
     function initEmojiPicker() {
@@ -410,19 +427,25 @@
       }
     });
 
-    // Notification sound
+    // Notification sound - reuses AudioContext for better performance
     function playNotificationSound() {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (err) {
+        console.error('Error playing notification sound:', err);
+      }
     }
 
     // Check scroll position and show/hide scroll button
@@ -678,7 +701,7 @@
         mediaRecorder.start();
         document.getElementById('recordBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
-        document.getElementById('recordingStatus').textContent = '🔴 Recording voice...';
+        document.getElementById('recordingStatus').textContent = 'Recording voice...';
         document.getElementById('recordingStatus').className = 'mt-2 mb-0 text-center recording';
       } catch (err) { 
         alert('Microphone access required for voice recording');
@@ -687,7 +710,10 @@
     };
 
     window.stopVoiceRecording = async () => {
-      if (!mediaRecorder) return;
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        console.warn('No active recording to stop');
+        return;
+      }
       
       mediaRecorder.stop();
       mediaRecorder.onstop = async () => {
@@ -709,12 +735,12 @@
           document.getElementById('recordingStatus').textContent = 'Failed to send voice message';
           document.getElementById('recordingStatus').className = 'mt-2 mb-0 text-center text-danger';
           console.error(err);
-        }
-        
-        document.getElementById('recordBtn').disabled = false;
-        document.getElementById('stopBtn').disabled = true;
-        if (mediaRecorder && mediaRecorder.stream) {
-          mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        } finally {
+          document.getElementById('recordBtn').disabled = false;
+          document.getElementById('stopBtn').disabled = true;
+          if (mediaRecorder && mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+          }
         }
       };
     };
