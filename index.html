@@ -468,7 +468,7 @@
       initEmojiPicker();
     });
 
-    window.signup = () => {
+    window.signup = async () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       if (!email || !password) return alert('Please fill in email and password');
@@ -477,7 +477,7 @@
         .catch(err => alert(err.message));
     };
 
-    window.login = () => {
+    window.login = async () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       if (!email || !password) return alert('Please fill in email and password');
@@ -503,7 +503,7 @@
         document.getElementById('auth').classList.remove('d-none');
         document.getElementById('chat').classList.add('d-none');
         if (unsubMessages) unsubMessages();
-        hangup();
+        window.hangup();
       }
     });
 
@@ -637,7 +637,7 @@
     document.getElementById('textMsg').addEventListener('keydown', e => { 
       if (e.key === 'Enter') {
         e.preventDefault();
-        sendText();
+        window.sendText();
       }
     });
 
