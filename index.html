@@ -292,23 +292,25 @@
 
     <!-- Chat Section -->
     <div id="chat" class="d-none">
-      <div class="card shadow">
-        <div class="row g-0">
-          <!-- Sidebar for Recent Chats -->
-          <div class="col-lg-4 border-end d-none d-lg-block" id="chatSidebar">
+      <div class="row g-0">
+        <!-- Sidebar for Recent Chats -->
+        <div class="col-lg-4 border-end" id="chatSidebar">
+          <div class="card shadow h-100">
             <div class="p-3 border-bottom">
               <h5 class="mb-3">Recent Chats</h5>
               <input type="email" id="partnerEmail" class="form-control mb-2" placeholder="Search or start new (email)">
-              <button class="btn btn-success btn-sm" onclick="startChat()">New Chat</button>
+              <button class="btn btn-success btn-sm w-100" onclick="startChat()">New Chat</button>
             </div>
-            <ul class="list-group overflow-y-auto" id="recentList" style="height: calc(100vh - 300px);">
+            <ul class="list-group list-group-flush overflow-y-auto" id="recentList" style="height: calc(100vh - 300px);">
               <!-- Filled by JS -->
               <li class="list-group-item text-center text-muted">No recent chats</li>
             </ul>
           </div>
+        </div>
 
-          <!-- Chat View -->
-          <div class="col-lg-8 col-12" id="chatView">
+        <!-- Chat View -->
+        <div class="col-lg-8 col-12" id="chatView">
+          <div class="card shadow h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
               <button class="btn btn-link text-white d-lg-none p-0" onclick="showSidebar()">← Back</button>
               <div class="flex-grow-1 text-center text-lg-start ms-2">
@@ -540,8 +542,15 @@
       isLoadingMessages = false;
       loadMessages();
       listenForCalls();
-      document.getElementById('chatView').classList.remove('d-none');
-      document.getElementById('chatSidebar').classList.add('d-lg-block', 'd-none');
+      // On mobile, hide sidebar and show chat view
+      if (window.innerWidth < 992) {
+        document.getElementById('chatSidebar').classList.add('d-none');
+        document.getElementById('chatView').classList.remove('d-none');
+      } else {
+        // On desktop, show both
+        document.getElementById('chatSidebar').classList.remove('d-none');
+        document.getElementById('chatView').classList.remove('d-none');
+      }
     }
 
     // Close emoji picker when clicking outside
