@@ -454,6 +454,7 @@
     let scrollListenerAdded = false;
     let isLoadingMessages = false;
     let onlineStatusInterval = null;
+    let scrollThrottleTimeout = null;
 
     // Emoji picker data
     const emojis = [
@@ -501,15 +502,28 @@
         const li = document.createElement('li');
         li.className = 'list-group-item d-flex align-items-center cursor-pointer';
         li.onclick = () => openChat(r.partnerId, r.partnerEmail);
-        li.innerHTML = `
-          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;">
-            ${r.partnerEmail[0].toUpperCase()}
-          </div>
-          <div class="flex-grow-1">
-            <strong>${r.partnerEmail}</strong><br>
-            <small>Tap to open</small>
-          </div>
-        `;
+        
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3';
+        avatarDiv.style.width = '50px';
+        avatarDiv.style.height = '50px';
+        avatarDiv.textContent = r.partnerEmail[0].toUpperCase();
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex-grow-1';
+        
+        const emailStrong = document.createElement('strong');
+        emailStrong.textContent = r.partnerEmail;
+        
+        const tapSmall = document.createElement('small');
+        tapSmall.textContent = 'Tap to open';
+        
+        contentDiv.appendChild(emailStrong);
+        contentDiv.appendChild(document.createElement('br'));
+        contentDiv.appendChild(tapSmall);
+        
+        li.appendChild(avatarDiv);
+        li.appendChild(contentDiv);
         list.appendChild(li);
       });
     }
@@ -755,9 +769,14 @@
       if (!scrollListenerAdded) {
         const messagesEl = document.getElementById('messages');
         messagesEl.addEventListener('scroll', () => {
-          if (messagesEl.scrollTop < 100 && lastDoc && !isLoadingMessages) {
-            loadMessages(); // Load older messages
-          }
+          // Throttle scroll events to prevent excessive calls
+          if (scrollThrottleTimeout) return;
+          scrollThrottleTimeout = setTimeout(() => {
+            scrollThrottleTimeout = null;
+            if (messagesEl.scrollTop < 100 && lastDoc && !isLoadingMessages) {
+              loadMessages(); // Load older messages
+            }
+          }, 200); // 200ms throttle
         });
         scrollListenerAdded = true;
       }
