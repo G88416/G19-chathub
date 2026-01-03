@@ -294,7 +294,7 @@
     <div id="chat" class="d-none">
       <div class="row g-0">
         <!-- Sidebar for Recent Chats -->
-        <div class="col-lg-4 border-end" id="chatSidebar">
+        <div class="col-lg-4 border-end d-none d-lg-block" id="chatSidebar">
           <div class="card shadow h-100">
             <div class="p-3 border-bottom">
               <h5 class="mb-3">Recent Chats</h5>
@@ -458,6 +458,9 @@
     let onlineStatusInterval = null;
     let scrollThrottleTimeout = null;
 
+    // Bootstrap lg breakpoint (992px)
+    const LG_BREAKPOINT = 992;
+
     // Emoji picker data
     const emojis = [
       '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇',
@@ -543,7 +546,7 @@
       loadMessages();
       listenForCalls();
       // On mobile, hide sidebar and show chat view
-      if (window.innerWidth < 992) {
+      if (window.innerWidth < LG_BREAKPOINT) {
         document.getElementById('chatSidebar').classList.add('d-none');
         document.getElementById('chatView').classList.remove('d-none');
       } else {
