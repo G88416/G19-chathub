@@ -483,7 +483,7 @@
 
       try {
         // Check if username is unique (if provided)
-        if (username && username.length > 0) {
+        if (username.length > 0) {
           const q = query(collection(db, 'users'), where('username', '==', username));
           const snap = await getDocs(q);
           if (!snap.empty) return alert('Username already taken');
@@ -494,7 +494,7 @@
 
         await setDoc(userDoc, {
           email,
-          username: username && username.length > 0 ? username : null,  // Username already converted to lowercase for case-insensitive lookup
+          username: username.length > 0 ? username : null,  // Username already converted to lowercase for case-insensitive lookup
           online: true,
           lastSeen: serverTimestamp()
         });
