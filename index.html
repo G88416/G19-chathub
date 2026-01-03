@@ -541,6 +541,11 @@
       const phone = document.getElementById('phone').value.trim();
       if (!phone) return alert('Enter phone number');
 
+      // Clean up existing verifier if present
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+      
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
       signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
         .then(confirmationResult => {
