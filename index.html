@@ -550,6 +550,7 @@
       signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
         .then(confirmationResult => {
           const code = prompt('Enter SMS code');
+          if (!code) return; // User cancelled
           return confirmationResult.confirm(code);
         })
         .catch(err => alert(err.message));
