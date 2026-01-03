@@ -227,7 +227,7 @@
       <div class="card-body text-center">
         <h3 class="card-title mb-4">Welcome to ChatHub</h3>
         <div class="mb-3">
-          <input type="text" id="username" class="form-control" placeholder="Username (optional)">
+          <input type="text" id="username" class="form-control" placeholder="Username (optional)" aria-label="Username (optional)">
         </div>
         <div class="mb-3">
           <input type="email" id="email" class="form-control" placeholder="Email address">
@@ -479,11 +479,11 @@
       const username = document.getElementById('username').value.trim().toLowerCase();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      if (!email || !password) return alert('Email and password required');
+      if (!email || !password) return alert('Please fill in all required fields');
 
       try {
         // Check if username is unique (if provided)
-        if (username) {
+        if (username && username.length > 0) {
           const q = query(collection(db, 'users'), where('username', '==', username));
           const snap = await getDocs(q);
           if (!snap.empty) return alert('Username already taken');
@@ -494,7 +494,7 @@
 
         await setDoc(userDoc, {
           email,
-          username: username || null,  // Store as lowercase for case-insensitive lookup
+          username: username && username.length > 0 ? username : null,  // Store as lowercase for case-insensitive lookup
           online: true,
           lastSeen: serverTimestamp()
         });
@@ -508,7 +508,7 @@
       const password = document.getElementById('password').value;
       const useUsername = document.getElementById('useUsername').checked;
 
-      if (!emailOrUsername || !password) return alert('Fill in credentials');
+      if (!emailOrUsername || !password) return alert('Please enter email/username and password');
 
       try {
         let email = emailOrUsername;
@@ -518,7 +518,7 @@
           const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
           const snap = await getDocs(q);
           if (snap.empty) return alert('Username not found');
-          snap.forEach(d => email = d.data().email);
+          email = snap.docs[0].data().email;
         }
 
         await signInWithEmailAndPassword(auth, email, password);
