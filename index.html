@@ -583,22 +583,21 @@
     });
 
     window.startChat = async () => {
-      let input = document.getElementById('partnerEmail').value.trim();
-      if (!input) return alert('Enter a partner email or phone number');
-      
-      let q;
-      if (input.includes('@')) {
-        q = query(collection(db, 'users'), where('email', '==', input));
-      } else {
-        q = query(collection(db, 'users'), where('phone', '==', input));
-      }
-      
+      const partnerInput = document.getElementById('partnerEmail').value.trim();
+      if (!partnerInput) return alert('Enter a partner email');
+
+      const partnerEmailLower = partnerInput.toLowerCase();
+      const q = query(collection(db, 'users'), where('emailLower', '==', partnerEmailLower));
       const snapshot = await getDocs(q);
-      if (snapshot.empty) return alert('User not found – they must sign up and log in once');
+
+      if (snapshot.empty) return alert('User not found. Check spelling or ensure they have logged in at least once.');
+
       snapshot.forEach(d => partnerId = d.id);
+
       const ids = [currentUser.uid, partnerId].sort();
       chatId = ids.join('_');
       messagesRef = collection(db, 'chats', chatId, 'messages');
+
       document.getElementById('messages').innerHTML = '';
       loadMessages();
       listenForCalls();
