@@ -235,13 +235,18 @@
         <div class="mb-4">
           <input type="password" id="password" class="form-control" placeholder="Password">
         </div>
+        <div class="mb-3">
+          <input type="tel" id="phone" class="form-control" placeholder="+1234567890">
+        </div>
         <div class="form-check mb-3 text-start">
           <input class="form-check-input" type="checkbox" id="useUsername">
           <label class="form-check-label" for="useUsername">Login with username instead of email</label>
         </div>
+        <div id="recaptcha-container"></div>
         <div class="d-grid gap-2">
           <button class="btn btn-primary btn-lg" onclick="signup()">Sign Up</button>
           <button class="btn btn-outline-success btn-lg" onclick="login()">Login</button>
+          <button class="btn btn-outline-info btn-lg" onclick="loginWithPhone()">Login with Phone</button>
         </div>
       </div>
     </div>
@@ -257,7 +262,7 @@
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div class="d-flex align-items-center gap-2 flex-grow-1">
             <span class="online-status"></span>
-            <input type="email" id="partnerEmail" class="form-control" placeholder="Partner's email" style="max-width: 250px;">
+            <input type="email" id="partnerEmail" class="form-control" placeholder="Partner's email or phone" style="max-width: 250px;">
             <button class="btn btn-primary" onclick="startChat()">
               <i class="bi bi-chat-dots"></i> Start Chat
             </button>
@@ -356,7 +361,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -532,12 +537,36 @@
 
     window.logout = () => signOut(auth);
 
+    window.loginWithPhone = () => {
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone) return alert('Enter phone number');
+
+      // Clean up existing verifier if present
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+      
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+      signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+        .then(confirmationResult => {
+          const code = prompt('Enter SMS code');
+          if (!code) return; // User cancelled
+          return confirmationResult.confirm(code);
+        })
+        .catch(err => alert(err.message));
+    };
+
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
         document.getElementById('auth').classList.add('d-none');
         document.getElementById('chat').classList.remove('d-none');
-        setDoc(doc(db, 'users', user.uid), { email: user.email, online: true, lastSeen: serverTimestamp() }, { merge: true });
+        setDoc(doc(db, 'users', user.uid), { 
+          email: user.email, 
+          phone: user.phoneNumber,
+          online: true, 
+          lastSeen: serverTimestamp() 
+        }, { merge: true });
         // Update online status periodically
         setInterval(() => {
           if (currentUser) {
@@ -554,9 +583,16 @@
     });
 
     window.startChat = async () => {
-      const partnerEmail = document.getElementById('partnerEmail').value.trim();
-      if (!partnerEmail) return alert('Enter a partner email');
-      const q = query(collection(db, 'users'), where('email', '==', partnerEmail));
+      let input = document.getElementById('partnerEmail').value.trim();
+      if (!input) return alert('Enter a partner email or phone number');
+      
+      let q;
+      if (input.includes('@')) {
+        q = query(collection(db, 'users'), where('email', '==', input));
+      } else {
+        q = query(collection(db, 'users'), where('phone', '==', input));
+      }
+      
       const snapshot = await getDocs(q);
       if (snapshot.empty) return alert('User not found – they must sign up and log in once');
       snapshot.forEach(d => partnerId = d.id);
