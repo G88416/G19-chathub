@@ -14,6 +14,10 @@
       transition: background-color 0.3s; 
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
+    .card-header {
+      background: #075e54 !important;
+      color: white;
+    }
     #messages {
       height: 55vh;
       overflow-y: auto;
@@ -21,36 +25,62 @@
       flex-direction: column;
       gap: 12px;
       padding: 15px;
-      background-color: #f8f9fa;
+      background: #efeae2; /* Light WhatsApp bg */
+      background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-9833e721c0d9.png'); /* Optional classic WhatsApp wallpaper */
+      background-size: cover;
       scroll-behavior: smooth;
     }
     [data-bs-theme="dark"] #messages {
       background-color: #212529;
     }
     .message {
-      max-width: 75%;
-      padding: 10px 16px;
-      border-radius: 20px;
+      position: relative;
+      padding: 8px 12px;
+      margin: 8px 12px;
+      max-width: 70%;
+      border-radius: 7.5px;
+      box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
       word-wrap: break-word;
       animation: fadeIn 0.3s ease-in;
-      position: relative;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     .message-time {
-      font-size: 0.7rem;
-      opacity: 0.7;
+      font-size: 0.65rem;
+      opacity: 0.8;
       margin-top: 4px;
       display: block;
     }
-    .self {
-      align-self: flex-end;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
     .other {
+      background: #ffffff;
       align-self: flex-start;
-      background-color: #e9ecef;
       color: black;
+    }
+    .other::before { /* Tail left */
+      content: '';
+      position: absolute;
+      left: -7px;
+      top: 0;
+      border: 8px solid transparent;
+      border-right-color: #ffffff;
+    }
+    .self {
+      background: #dcf8c6;
+      align-self: flex-end;
+      color: black;
+    }
+    .self::before { /* Tail right */
+      content: '';
+      position: absolute;
+      right: -7px;
+      top: 0;
+      border: 8px solid transparent;
+      border-left-color: #dcf8c6;
+    }
+    /* Read receipts (blue double tick for self messages) */
+    .self .message-time::after {
+      content: '✓✓';
+      color: #4fc3f7;
+      margin-left: 4px;
+      font-size: 0.8rem;
     }
     [data-bs-theme="dark"] .other {
       background-color: #343a40;
@@ -204,6 +234,9 @@
     .loading-spinner.show {
       display: block;
     }
+    .cursor-pointer {
+      cursor: pointer;
+    }
     /* Mobile optimizations */
     @media (max-width: 991px) {
       #messages { height: 50vh; }
@@ -259,74 +292,91 @@
     <!-- Chat Section -->
     <div id="chat" class="d-none">
       <div class="card shadow">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div class="d-flex align-items-center gap-2 flex-grow-1">
-            <span class="online-status"></span>
-            <input type="email" id="partnerEmail" class="form-control" placeholder="Partner's email or phone" style="max-width: 250px;">
-            <button class="btn btn-primary" onclick="startChat()">
-              <i class="bi bi-chat-dots"></i> Start Chat
-            </button>
+        <div class="row g-0">
+          <!-- Sidebar for Recent Chats -->
+          <div class="col-lg-4 border-end d-none d-lg-block" id="chatSidebar">
+            <div class="p-3 border-bottom">
+              <h5 class="mb-3">Recent Chats</h5>
+              <input type="email" id="partnerEmail" class="form-control mb-2" placeholder="Search or start new (email)">
+              <button class="btn btn-success btn-sm" onclick="startChat()">New Chat</button>
+            </div>
+            <ul class="list-group overflow-y-auto" id="recentList" style="height: calc(100vh - 300px);">
+              <!-- Filled by JS -->
+              <li class="list-group-item text-center text-muted">No recent chats</li>
+            </ul>
           </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-outline-secondary" onclick="toggleTheme()" title="Toggle theme">
-              <i class="bi bi-moon-stars-fill"></i>
-            </button>
-            <button class="btn btn-outline-danger" onclick="logout()" title="Logout">
-              <i class="bi bi-box-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <div class="row g-0">
-            <!-- Video Call Area -->
-            <div class="col-lg-5 p-3 border-end">
-              <div id="videoContainer" class="d-flex flex-column gap-3 align-items-center">
-                <video id="localVideo" autoplay playsinline muted></video>
-                <video id="remoteVideo" autoplay playsinline></video>
+
+          <!-- Chat View -->
+          <div class="col-lg-8 col-12" id="chatView">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <button class="btn btn-link text-white d-lg-none p-0" onclick="showSidebar()">← Back</button>
+              <div class="flex-grow-1 text-center text-lg-start ms-2">
+                <span id="partnerName">Select a chat</span>
+                <span class="online-status ms-2" id="partnerOnline"></span>
+                <small id="partnerStatus"></small>
               </div>
-              <div class="text-center mt-3 d-flex gap-2 justify-content-center flex-wrap">
-                <button class="btn btn-success" onclick="startCall()" title="Start video call">
-                  <i class="bi bi-camera-video"></i> Start
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" onclick="toggleTheme()" title="Toggle theme">
+                  <i class="bi bi-moon-stars-fill"></i>
                 </button>
-                <button class="btn btn-danger" onclick="hangup()" title="End call">
-                  <i class="bi bi-telephone-x"></i> End
+                <button class="btn btn-outline-light btn-sm" onclick="logout()" title="Logout">
+                  <i class="bi bi-box-arrow-right"></i>
                 </button>
               </div>
             </div>
-            <!-- Chat Area -->
-            <div class="col-lg-7 d-flex flex-column position-relative">
-              <div id="messages" class="flex-grow-1">
-                <div class="loading-spinner">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <div class="card-body p-0">
+              <div class="row g-0">
+                <!-- Video Call Area -->
+                <div class="col-lg-5 p-3 border-end">
+                  <div id="videoContainer" class="d-flex flex-column gap-3 align-items-center">
+                    <video id="localVideo" autoplay playsinline muted></video>
+                    <video id="remoteVideo" autoplay playsinline></video>
+                  </div>
+                  <div class="text-center mt-3 d-flex gap-2 justify-content-center flex-wrap">
+                    <button class="btn btn-success" onclick="startCall()" title="Start video call">
+                      <i class="bi bi-camera-video"></i> Start
+                    </button>
+                    <button class="btn btn-danger" onclick="hangup()" title="End call">
+                      <i class="bi bi-telephone-x"></i> End
+                    </button>
                   </div>
                 </div>
-              </div>
-              <button class="btn btn-primary btn-sm scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom">
-                <i class="bi bi-arrow-down"></i>
-              </button>
-              <div class="p-3 border-top position-relative">
-                <div class="emoji-picker" id="emojiPicker"></div>
-                <div class="input-group">
-                  <input type="text" id="textMsg" class="form-control" placeholder="Type a message..." aria-label="Message">
-                  <button class="btn btn-primary" onclick="sendText()" title="Send message">
-                    <i class="bi bi-send"></i>
+                <!-- Chat Area -->
+                <div class="col-lg-7 d-flex flex-column position-relative">
+                  <div id="messages" class="flex-grow-1">
+                    <div class="loading-spinner">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn btn-primary btn-sm scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom">
+                    <i class="bi bi-arrow-down"></i>
                   </button>
-                  <button class="btn btn-outline-secondary" onclick="toggleEmojiPicker()" title="Add emoji">
-                    <i class="bi bi-emoji-smile"></i>
-                  </button>
-                  <input type="file" id="fileInput" style="display:none;">
-                  <button class="btn btn-outline-secondary" onclick="document.getElementById('fileInput').click()" title="Attach file">
-                    <i class="bi bi-paperclip"></i>
-                  </button>
-                  <button class="btn btn-outline-secondary" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
-                    <i class="bi bi-mic"></i>
-                  </button>
-                  <button class="btn btn-outline-danger" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording">
-                    <i class="bi bi-stop-circle"></i>
-                  </button>
+                  <div class="p-3 border-top position-relative">
+                    <div class="emoji-picker" id="emojiPicker"></div>
+                    <div class="input-group">
+                      <input type="text" id="textMsg" class="form-control" placeholder="Type a message..." aria-label="Message">
+                      <button class="btn btn-primary" onclick="sendText()" title="Send message">
+                        <i class="bi bi-send"></i>
+                      </button>
+                      <button class="btn btn-outline-secondary" onclick="toggleEmojiPicker()" title="Add emoji">
+                        <i class="bi bi-emoji-smile"></i>
+                      </button>
+                      <input type="file" id="fileInput" style="display:none;">
+                      <button class="btn btn-outline-secondary" onclick="document.getElementById('fileInput').click()" title="Attach file">
+                        <i class="bi bi-paperclip"></i>
+                      </button>
+                      <button class="btn btn-outline-secondary" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
+                        <i class="bi bi-mic"></i>
+                      </button>
+                      <button class="btn btn-outline-danger" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording">
+                        <i class="bi bi-stop-circle"></i>
+                      </button>
+                    </div>
+                    <p id="recordingStatus" class="mt-2 mb-0 text-center"></p>
+                  </div>
                 </div>
-                <p id="recordingStatus" class="mt-2 mb-0 text-center"></p>
               </div>
             </div>
           </div>
@@ -354,6 +404,11 @@
       document.getElementById('emojiPicker').classList.toggle('show');
     };
 
+    window.showSidebar = function() {
+      document.getElementById('chatSidebar').classList.remove('d-none');
+      document.getElementById('chatView').classList.add('d-none');
+    };
+
     // Restore theme preference
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.body.setAttribute('data-bs-theme', savedTheme);
@@ -362,7 +417,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, onSnapshot, serverTimestamp, deleteDoc, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -392,6 +447,9 @@
     let typingTimeout = null;
     let isTyping = false;
     let audioContext = null;
+    let recentChats = [];
+    let lastDoc = null;
+    let partnerEmail = '';
 
     // Emoji picker data
     const emojis = [
@@ -428,6 +486,42 @@
       input.value += emoji;
       input.focus();
       document.getElementById('emojiPicker').classList.remove('show');
+    }
+
+    // Recent chats management
+    function loadRecent() {
+      recentChats = JSON.parse(localStorage.getItem(`recent_${currentUser.uid}`) || '[]');
+      const list = document.getElementById('recentList');
+      list.innerHTML = recentChats.length ? '' : '<li class="list-group-item text-center text-muted">No recent chats – start one!</li>';
+      recentChats.forEach(r => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex align-items-center cursor-pointer';
+        li.onclick = () => openChat(r.partnerId, r.partnerEmail);
+        li.innerHTML = `
+          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width:50px;height:50px;">
+            ${r.partnerEmail[0].toUpperCase()}
+          </div>
+          <div class="flex-grow-1">
+            <strong>${r.partnerEmail}</strong><br>
+            <small>Tap to open</small>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function openChat(pId, pEmail) {
+      partnerId = pId;
+      partnerEmail = pEmail;
+      document.getElementById('partnerName').textContent = pEmail;
+      chatId = [currentUser.uid, partnerId].sort().join('_');
+      messagesRef = collection(db, 'chats', chatId, 'messages');
+      document.getElementById('messages').innerHTML = '';
+      lastDoc = null;
+      loadMessages();
+      listenForCalls();
+      document.getElementById('chatView').classList.remove('d-none');
+      document.getElementById('chatSidebar').classList.add('d-lg-block', 'd-none');
     }
 
     // Close emoji picker when clicking outside
@@ -567,6 +661,8 @@
           online: true, 
           lastSeen: serverTimestamp() 
         }, { merge: true });
+        // Load recent chats
+        loadRecent();
         // Update online status periodically
         setInterval(() => {
           if (currentUser) {
@@ -596,17 +692,26 @@
       const snapshot = await getDocs(q);
       if (snapshot.empty) return alert('User not found – they must sign up and log in once');
       snapshot.forEach(d => partnerId = d.id);
-      const ids = [currentUser.uid, partnerId].sort();
-      chatId = ids.join('_');
-      messagesRef = collection(db, 'chats', chatId, 'messages');
-      document.getElementById('messages').innerHTML = '';
-      loadMessages();
-      listenForCalls();
+      partnerEmail = input;
+      
+      // Save to recent chats
+      const newR = {partnerId, partnerEmail, timestamp: Date.now()};
+      recentChats = recentChats.filter(r => r.partnerId !== partnerId);
+      recentChats.unshift(newR);
+      localStorage.setItem(`recent_${currentUser.uid}`, JSON.stringify(recentChats.slice(0,50)));
+      loadRecent();
+      
+      // Open the chat
+      openChat(partnerId, partnerEmail);
     };
 
     function loadMessages() {
       if (unsubMessages) unsubMessages();
-      const q = query(messagesRef, orderBy('timestamp'));
+      let q = query(messagesRef, orderBy('timestamp', 'desc'), limit(30));
+      if (lastDoc) {
+        q = query(messagesRef, orderBy('timestamp', 'desc'), startAfter(lastDoc), limit(30));
+      }
+      
       unsubMessages = onSnapshot(q, snap => {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
@@ -618,8 +723,12 @@
             }
           }
         });
+        if (snap.docs.length > 0) {
+          lastDoc = snap.docs[snap.docs.length - 1];
+        }
         window.scrollToBottom();
       });
+      
       // Listen for typing status
       onSnapshot(doc(db, 'chats', chatId, 'status', 'typing'), snap => {
         const data = snap.data();
@@ -627,6 +736,14 @@
           showTypingIndicator();
         } else {
           hideTypingIndicator();
+        }
+      });
+      
+      // Load more on scroll up
+      const messagesEl = document.getElementById('messages');
+      messagesEl.addEventListener('scroll', () => {
+        if (messagesEl.scrollTop < 100 && lastDoc) {
+          loadMessages(); // Load older messages
         }
       });
     }
