@@ -28,6 +28,7 @@
       background: #efeae2; /* Light WhatsApp bg */
       background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-9833e721c0d9.png'); /* Optional classic WhatsApp wallpaper */
       background-size: cover;
+      background-position: center;
       scroll-behavior: smooth;
     }
     [data-bs-theme="dark"] #messages {
@@ -451,6 +452,8 @@
     let lastDoc = null;
     let partnerEmail = '';
     let scrollListenerAdded = false;
+    let isLoadingMessages = false;
+    let onlineStatusInterval = null;
 
     // Emoji picker data
     const emojis = [
@@ -520,6 +523,7 @@
       document.getElementById('messages').innerHTML = '';
       lastDoc = null;
       scrollListenerAdded = false;
+      isLoadingMessages = false;
       loadMessages();
       listenForCalls();
       document.getElementById('chatView').classList.remove('d-none');
@@ -665,8 +669,9 @@
         }, { merge: true });
         // Load recent chats
         loadRecent();
-        // Update online status periodically
-        setInterval(() => {
+        // Update online status periodically (clear existing interval first)
+        if (onlineStatusInterval) clearInterval(onlineStatusInterval);
+        onlineStatusInterval = setInterval(() => {
           if (currentUser) {
             setDoc(doc(db, 'users', currentUser.uid), { online: true, lastSeen: serverTimestamp() }, { merge: true });
           }
@@ -676,6 +681,7 @@
         document.getElementById('auth').classList.remove('d-none');
         document.getElementById('chat').classList.add('d-none');
         if (unsubMessages) unsubMessages();
+        if (onlineStatusInterval) clearInterval(onlineStatusInterval);
         window.hangup();
       }
     });
@@ -709,9 +715,12 @@
 
     function loadMessages() {
       if (unsubMessages) unsubMessages();
-      let q = query(messagesRef, orderBy('timestamp', 'desc'), limit(30));
+      if (isLoadingMessages) return; // Prevent concurrent loading
+      isLoadingMessages = true;
+      
+      let q = query(messagesRef, orderBy('timestamp'), limit(30));
       if (lastDoc) {
-        q = query(messagesRef, orderBy('timestamp', 'desc'), startAfter(lastDoc), limit(30));
+        q = query(messagesRef, orderBy('timestamp'), startAfter(lastDoc), limit(30));
       }
       
       unsubMessages = onSnapshot(q, snap => {
@@ -728,6 +737,7 @@
         if (snap.docs.length > 0) {
           lastDoc = snap.docs[snap.docs.length - 1];
         }
+        isLoadingMessages = false;
         window.scrollToBottom();
       });
       
@@ -745,7 +755,7 @@
       if (!scrollListenerAdded) {
         const messagesEl = document.getElementById('messages');
         messagesEl.addEventListener('scroll', () => {
-          if (messagesEl.scrollTop < 100 && lastDoc) {
+          if (messagesEl.scrollTop < 100 && lastDoc && !isLoadingMessages) {
             loadMessages(); // Load older messages
           }
         });
