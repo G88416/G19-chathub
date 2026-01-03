@@ -518,7 +518,10 @@
           const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
           const snap = await getDocs(q);
           if (snap.empty) return alert('Username not found');
-          email = snap.docs[0].data().email;
+          
+          const userData = snap.docs[0]?.data();
+          if (!userData || !userData.email) return alert('Invalid user data');
+          email = userData.email;
         }
 
         await signInWithEmailAndPassword(auth, email, password);
