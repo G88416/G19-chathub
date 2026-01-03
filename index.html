@@ -450,6 +450,7 @@
     let recentChats = [];
     let lastDoc = null;
     let partnerEmail = '';
+    let scrollListenerAdded = false;
 
     // Emoji picker data
     const emojis = [
@@ -518,6 +519,7 @@
       messagesRef = collection(db, 'chats', chatId, 'messages');
       document.getElementById('messages').innerHTML = '';
       lastDoc = null;
+      scrollListenerAdded = false;
       loadMessages();
       listenForCalls();
       document.getElementById('chatView').classList.remove('d-none');
@@ -739,13 +741,16 @@
         }
       });
       
-      // Load more on scroll up
-      const messagesEl = document.getElementById('messages');
-      messagesEl.addEventListener('scroll', () => {
-        if (messagesEl.scrollTop < 100 && lastDoc) {
-          loadMessages(); // Load older messages
-        }
-      });
+      // Load more on scroll up (only add listener once)
+      if (!scrollListenerAdded) {
+        const messagesEl = document.getElementById('messages');
+        messagesEl.addEventListener('scroll', () => {
+          if (messagesEl.scrollTop < 100 && lastDoc) {
+            loadMessages(); // Load older messages
+          }
+        });
+        scrollListenerAdded = true;
+      }
     }
 
     function showTypingIndicator() {
