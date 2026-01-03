@@ -227,10 +227,17 @@
       <div class="card-body text-center">
         <h3 class="card-title mb-4">Welcome to ChatHub</h3>
         <div class="mb-3">
+          <input type="text" id="username" class="form-control" placeholder="Username (optional)" aria-label="Username (optional)">
+        </div>
+        <div class="mb-3">
           <input type="email" id="email" class="form-control" placeholder="Email address">
         </div>
         <div class="mb-4">
           <input type="password" id="password" class="form-control" placeholder="Password">
+        </div>
+        <div class="form-check mb-3 text-start">
+          <input class="form-check-input" type="checkbox" id="useUsername">
+          <label class="form-check-label" for="useUsername">Login with username instead of email</label>
         </div>
         <div class="d-grid gap-2">
           <button class="btn btn-primary btn-lg" onclick="signup()">Sign Up</button>
@@ -469,19 +476,58 @@
     });
 
     window.signup = async () => {
+      const username = document.getElementById('username').value.trim().toLowerCase();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      if (!email || !password) return alert('Please fill in email and password');
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => setDoc(doc(db, 'users', auth.currentUser.uid), { email }))
-        .catch(err => alert(err.message));
+      if (!email || !password) return alert('Please fill in all required fields');
+
+      try {
+        // Check if username is unique (if provided)
+        if (username.length > 0) {
+          const q = query(collection(db, 'users'), where('username', '==', username));
+          const snap = await getDocs(q);
+          if (!snap.empty) return alert('Username already taken');
+        }
+
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const userDoc = doc(db, 'users', cred.user.uid);
+
+        await setDoc(userDoc, {
+          email,
+          username: username.length > 0 ? username : null,  // Username already converted to lowercase for case-insensitive lookup
+          online: true,
+          lastSeen: serverTimestamp()
+        });
+      } catch (err) {
+        alert(err.message);
+      }
     };
 
     window.login = async () => {
-      const email = document.getElementById('email').value.trim();
+      let emailOrUsername = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      if (!email || !password) return alert('Please fill in email and password');
-      signInWithEmailAndPassword(auth, email, password).catch(err => alert(err.message));
+      const useUsername = document.getElementById('useUsername').checked;
+
+      if (!emailOrUsername || !password) return alert('Please enter email/username and password');
+
+      try {
+        let email = emailOrUsername;
+
+        if (useUsername) {
+          // Lookup email by username (case-insensitive)
+          const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
+          const snap = await getDocs(q);
+          if (snap.empty) return alert('Username not found');
+          
+          const userData = snap.docs[0]?.data();
+          if (!userData || !userData.email) return alert('Account not found or missing email address');
+          email = userData.email;
+        }
+
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        alert(err.message);
+      }
     };
 
     window.logout = () => signOut(auth);
