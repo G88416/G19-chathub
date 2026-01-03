@@ -495,10 +495,10 @@
         }
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const userDoc = doc(db, 'users', cred.user.uid);
-
-        await setDoc(userDoc, {
-          email,
+        const emailLower = email.toLowerCase().trim();
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          email: email,
+          emailLower: emailLower,
           username: username.length > 0 ? username : null,  // Username already converted to lowercase for case-insensitive lookup
           online: true,
           lastSeen: serverTimestamp()
@@ -561,11 +561,13 @@
         currentUser = user;
         document.getElementById('auth').classList.add('d-none');
         document.getElementById('chat').classList.remove('d-none');
-        setDoc(doc(db, 'users', user.uid), { 
-          email: user.email, 
+        const emailLower = user.email ? user.email.toLowerCase().trim() : null;
+        setDoc(doc(db, 'users', user.uid), {
+          email: user.email,
+          emailLower: emailLower,
           phone: user.phoneNumber,
-          online: true, 
-          lastSeen: serverTimestamp() 
+          online: true,
+          lastSeen: serverTimestamp()
         }, { merge: true });
         // Update online status periodically
         setInterval(() => {
