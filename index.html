@@ -24,6 +24,15 @@
       background-color: #f8f9fa;
       scroll-behavior: smooth;
     }
+    #messages:empty::before {
+      content: "No messages yet. Start chatting!";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #6c757d;
+      font-style: italic;
+    }
     [data-bs-theme="dark"] #messages {
       background-color: #212529;
     }
@@ -196,6 +205,16 @@
       background: #dc3545;
       display: block;
     }
+    .btn {
+      transition: all 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
     .loading-spinner {
       display: none;
       text-align: center;
@@ -261,10 +280,13 @@
       <div class="card shadow">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div class="d-flex align-items-center gap-2 flex-grow-1">
-            <span class="online-status"></span>
-            <input type="email" id="partnerEmail" class="form-control" placeholder="Partner's email or phone" style="max-width: 250px;">
+            <span class="online-status" id="chatStatus" style="display: none;" title="Chat active"></span>
+            <input type="text" id="partnerEmail" class="form-control" placeholder="Partner's email, username or phone" style="max-width: 280px;">
             <button class="btn btn-primary" onclick="startChat()">
               <i class="bi bi-chat-dots"></i> Start Chat
+            </button>
+            <button class="btn btn-outline-primary" onclick="newChat()" title="Start a new chat">
+              <i class="bi bi-plus-circle"></i> New Chat
             </button>
           </div>
           <div class="d-flex gap-2 flex-wrap">
@@ -584,25 +606,72 @@
       }
     });
 
+    window.newChat = () => {
+      // Clear current chat
+      if (unsubMessages) unsubMessages();
+      partnerId = null;
+      chatId = null;
+      messagesRef = null;
+      document.getElementById('messages').innerHTML = '';
+      document.getElementById('partnerEmail').value = '';
+      document.getElementById('partnerEmail').focus();
+      document.getElementById('chatStatus').style.display = 'none';
+      alert('Enter a partner email, username, or phone number to start a new chat');
+    };
+
     window.startChat = async () => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
-      if (!partnerInput) return alert('Enter a partner email');
+      if (!partnerInput) return alert('Enter a partner email, username, or phone number');
 
-      const partnerEmailLower = partnerInput.toLowerCase();
-      const q = query(collection(db, 'users'), where('emailLower', '==', partnerEmailLower));
-      const snapshot = await getDocs(q);
+      try {
+        const partnerInputLower = partnerInput.toLowerCase();
+        let snapshot;
 
-      if (snapshot.empty) return alert('User not found. Check spelling or ensure they have logged in at least once.');
+        // Try to find user by email first
+        let q = query(collection(db, 'users'), where('emailLower', '==', partnerInputLower));
+        snapshot = await getDocs(q);
 
-      snapshot.forEach(d => partnerId = d.id);
+        // If not found by email, try username
+        if (snapshot.empty) {
+          q = query(collection(db, 'users'), where('username', '==', partnerInputLower));
+          snapshot = await getDocs(q);
+        }
 
-      const ids = [currentUser.uid, partnerId].sort();
-      chatId = ids.join('_');
-      messagesRef = collection(db, 'chats', chatId, 'messages');
+        // If not found by username, try phone number
+        if (snapshot.empty) {
+          q = query(collection(db, 'users'), where('phone', '==', partnerInput));
+          snapshot = await getDocs(q);
+        }
 
-      document.getElementById('messages').innerHTML = '';
-      loadMessages();
-      listenForCalls();
+        if (snapshot.empty) {
+          return alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+        }
+
+        snapshot.forEach(d => partnerId = d.id);
+
+        // Check if trying to chat with self
+        if (partnerId === currentUser.uid) {
+          return alert('You cannot start a chat with yourself');
+        }
+
+        const ids = [currentUser.uid, partnerId].sort();
+        chatId = ids.join('_');
+        messagesRef = collection(db, 'chats', chatId, 'messages');
+
+        document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        document.getElementById('chatStatus').style.display = 'inline-block';
+        loadMessages();
+        listenForCalls();
+        
+        // Hide loading spinner after a short delay
+        setTimeout(() => {
+          const spinner = document.querySelector('.loading-spinner');
+          if (spinner) spinner.classList.remove('show');
+        }, 500);
+      } catch (err) {
+        alert('Error starting chat: ' + err.message);
+        console.error(err);
+      }
     };
 
     function loadMessages() {
