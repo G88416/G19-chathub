@@ -1148,9 +1148,15 @@
         const partnerInputLower = partnerInput.toLowerCase();
         let snapshot;
 
-        // Try to find user by email first
+        // Try to find user by email first (case-insensitive with emailLower)
         let q = query(collection(db, 'users'), where('emailLower', '==', partnerInputLower));
         snapshot = await getDocs(q);
+
+        // If not found by emailLower, try the original email field (for backwards compatibility)
+        if (snapshot.empty) {
+          q = query(collection(db, 'users'), where('email', '==', partnerInput));
+          snapshot = await getDocs(q);
+        }
 
         // If not found by email, try username
         if (snapshot.empty) {
