@@ -3,25 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enhanced Firebase Chat App</title>
+  <title>ChatHub - WhatsApp Style</title>
   <!-- Bootstrap 5 for modern, responsive, user-friendly design -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons for better UX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body { 
       min-height: 100vh; 
-      transition: background-color 0.3s; 
+      background: #111b21;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      overflow: hidden;
     }
+    /* WhatsApp-style container */
+    .whatsapp-container {
+      display: flex;
+      height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+      background: #111b21;
+    }
+    
+    /* Sidebar - Chat list */
+    .sidebar {
+      width: 35%;
+      max-width: 450px;
+      min-width: 300px;
+      background: #111b21;
+      border-right: 1px solid #2a3942;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar-header {
+      background: #202c33;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2a3942;
+    }
+    
+    .sidebar-header h5 {
+      color: #e9edef;
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    
+    .sidebar-search {
+      padding: 10px;
+      background: #202c33;
+      border-bottom: 1px solid #2a3942;
+    }
+    
+    .sidebar-search input {
+      width: 100%;
+      padding: 10px 15px;
+      background: #111b21;
+      border: 1px solid #2a3942;
+      border-radius: 8px;
+      color: #e9edef;
+      font-size: 0.9rem;
+    }
+    
+    .sidebar-search input::placeholder {
+      color: #8696a0;
+    }
+    
+    .sidebar-search input:focus {
+      outline: none;
+      border-color: #00a884;
+    }
+    
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      background: #111b21;
+    }
+    
+    .chat-item {
+      padding: 15px;
+      border-bottom: 1px solid #2a3942;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .chat-item:hover {
+      background: #202c33;
+    }
+    
+    .chat-item.active {
+      background: #2a3942;
+    }
+    
+    .chat-item-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #00a884;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .chat-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .chat-item-name {
+      color: #e9edef;
+      font-weight: 500;
+      font-size: 1rem;
+      margin-bottom: 2px;
+    }
+    
+    .chat-item-message {
+      color: #8696a0;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Main chat area */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0b141a;
+    }
+    
+    .chat-header {
+      background: #202c33;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a3942;
+    }
+    
+    .chat-header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+    
+    .chat-header-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #00a884;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    
+    .chat-header-details h6 {
+      color: #e9edef;
+      margin: 0;
+      font-size: 1rem;
+    }
+    
+    .chat-header-details p {
+      color: #8696a0;
+      margin: 0;
+      font-size: 0.8rem;
+    }
+    
+    .chat-header-actions {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .chat-header-actions button {
+      background: none;
+      border: none;
+      color: #8696a0;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 5px;
+      transition: color 0.2s;
+    }
+    
+    .chat-header-actions button:hover {
+      color: #e9edef;
+    }
+    
     #messages {
-      height: 55vh;
+      flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 15px;
-      background-color: #f8f9fa;
+      gap: 8px;
+      padding: 20px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23202c33" width="100" height="100"/><path d="M0 0 L50 50 L0 100" stroke="%232a3942" stroke-width="0.5" fill="none" opacity="0.1"/></svg>');
+      background-color: #0b141a;
       scroll-behavior: smooth;
     }
     #messages:empty::before {
@@ -30,90 +223,328 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      color: #6c757d;
+      color: #8696a0;
       font-style: italic;
     }
-    [data-bs-theme="dark"] #messages {
-      background-color: #212529;
-    }
     .message {
-      max-width: 75%;
-      padding: 10px 16px;
-      border-radius: 20px;
+      max-width: 65%;
+      padding: 8px 12px;
+      border-radius: 8px;
       word-wrap: break-word;
       animation: fadeIn 0.3s ease-in;
       position: relative;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      margin-bottom: 2px;
     }
     .message-time {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       opacity: 0.7;
+      margin-left: 8px;
+      display: inline-block;
+      float: right;
       margin-top: 4px;
-      display: block;
     }
     .self {
       align-self: flex-end;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: #005c4b;
+      color: #e9edef;
+      border-radius: 8px 8px 0 8px;
     }
     .other {
       align-self: flex-start;
-      background-color: #e9ecef;
-      color: black;
+      background: #202c33;
+      color: #e9edef;
+      border-radius: 8px 8px 8px 0;
     }
-    [data-bs-theme="dark"] .other {
-      background-color: #343a40;
+    /* Auth Section Styling */
+    .auth-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #0b141a;
+    }
+    
+    .auth-card {
+      background: #202c33;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      max-width: 420px;
+      width: 100%;
+      margin: 20px;
+    }
+    
+    .auth-card-body {
+      padding: 40px 30px;
+    }
+    
+    .auth-card h3 {
+      color: #e9edef;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.5rem;
+    }
+    
+    .auth-card input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+      background: #2a3942;
+      border: 1px solid #2a3942;
+      border-radius: 6px;
+      color: #e9edef;
+      font-size: 0.95rem;
+    }
+    
+    .auth-card input::placeholder {
+      color: #8696a0;
+    }
+    
+    .auth-card input:focus {
+      outline: none;
+      border-color: #00a884;
+      background: #323d47;
+    }
+    
+    .auth-card button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .auth-btn-primary {
+      background: #00a884;
       color: white;
     }
-    #videoContainer {
-      position: relative;
+    
+    .auth-btn-primary:hover {
+      background: #06cf9c;
     }
-    #videoContainer video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 12px;
-      background: #000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    
+    .auth-btn-secondary {
+      background: #2a3942;
+      color: #e9edef;
     }
-    .recording { 
-      color: red; 
-      font-weight: bold; 
-      animation: pulse 1.5s infinite;
+    
+    .auth-btn-secondary:hover {
+      background: #323d47;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    
+    .auth-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    img.rounded { 
-      border-radius: 12px; 
-      max-width: 100%; 
+    
+    .auth-checkbox input[type="checkbox"] {
+      width: auto;
+      margin: 0;
       cursor: pointer;
-      transition: transform 0.2s;
     }
-    img.rounded:hover {
-      transform: scale(1.02);
+    
+    .auth-checkbox label {
+      color: #8696a0;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin: 0;
     }
+    
+    /* Video call modal */
+    .video-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .video-modal.show {
+      display: flex;
+    }
+    
+    .video-modal-content {
+      background: #202c33;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 800px;
+      width: 90%;
+    }
+    
+    .video-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .video-controls button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .video-btn-start {
+      background: #00a884;
+      color: white;
+    }
+    
+    .video-btn-start:hover {
+      background: #06cf9c;
+    }
+    
+    .video-btn-end {
+      background: #d9534f;
+      color: white;
+    }
+    
+    .video-btn-end:hover {
+      background: #c9302c;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        max-width: 100%;
+        display: none;
+      }
+      
+      .sidebar.show-mobile {
+        display: flex;
+      }
+      
+      .chat-main {
+        width: 100%;
+      }
+      
+      .chat-main.hide-mobile {
+        display: none;
+      }
+      
+      .message {
+        max-width: 80%;
+      }
+      
+      .video-modal-content {
+        width: 95%;
+        padding: 15px;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .message {
+        max-width: 85%;
+        font-size: 0.9rem;
+      }
+      
+      .chat-header-info {
+        flex-direction: row;
+      }
+      
+      .auth-card-body {
+        padding: 30px 20px;
+      }
+    }
+    /* Chat input area */
+    .chat-input-wrapper {
+      background: #202c33;
+      padding: 12px 20px;
+      border-top: 1px solid #2a3942;
+    }
+    
+    .chat-input-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .chat-input-container input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      background: #2a3942;
+      border: none;
+      border-radius: 8px;
+      color: #e9edef;
+      font-size: 0.95rem;
+    }
+    
+    .chat-input-container input[type="text"]::placeholder {
+      color: #8696a0;
+    }
+    
+    .chat-input-container input[type="text"]:focus {
+      outline: none;
+      background: #323d47;
+    }
+    
+    .chat-input-btn {
+      background: none;
+      border: none;
+      color: #8696a0;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+    
+    .chat-input-btn:hover {
+      background: #2a3942;
+      color: #e9edef;
+    }
+    
+    .chat-input-btn.send {
+      background: #00a884;
+      color: white;
+    }
+    
+    .chat-input-btn.send:hover {
+      background: #06cf9c;
+    }
+    
+    .chat-input-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
     .typing-indicator {
       display: flex;
       gap: 4px;
-      padding: 10px;
+      padding: 10px 12px;
       align-self: flex-start;
-      background-color: #e9ecef;
-      border-radius: 20px;
+      background: #202c33;
+      border-radius: 8px 8px 8px 0;
       width: 60px;
-    }
-    [data-bs-theme="dark"] .typing-indicator {
-      background-color: #343a40;
     }
     .typing-indicator span {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background-color: #6c757d;
+      background-color: #8696a0;
       animation: bounce 1.4s infinite ease-in-out both;
     }
     .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
@@ -123,44 +554,57 @@
       40% { transform: scale(1); }
     }
     .online-status {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background-color: #28a745;
+      background-color: #00a884;
       display: inline-block;
-      margin-right: 5px;
+      margin-left: 5px;
       animation: pulse 2s infinite;
     }
     .scroll-to-bottom {
       position: absolute;
-      bottom: 10px;
-      right: 10px;
+      bottom: 80px;
+      right: 20px;
       z-index: 10;
       opacity: 0;
       transition: opacity 0.3s;
+      background: #202c33;
+      border: none;
+      color: #8696a0;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
     }
     .scroll-to-bottom.show {
       opacity: 1;
     }
+    .scroll-to-bottom:hover {
+      background: #2a3942;
+      color: #e9edef;
+    }
     .emoji-picker {
       position: absolute;
       bottom: 100%;
-      right: 0;
-      background: white;
-      border: 1px solid #dee2e6;
+      right: 60px;
+      background: #202c33;
+      border: 1px solid #2a3942;
       border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 5px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       display: none;
-      max-width: 300px;
+      max-width: 350px;
       flex-wrap: wrap;
       gap: 5px;
       z-index: 1000;
-    }
-    [data-bs-theme="dark"] .emoji-picker {
-      background: #343a40;
-      border-color: #495057;
+      max-height: 300px;
+      overflow-y: auto;
     }
     .emoji-picker.show {
       display: flex;
@@ -168,15 +612,12 @@
     .emoji-picker span {
       cursor: pointer;
       font-size: 1.5rem;
-      padding: 5px;
+      padding: 8px;
       border-radius: 4px;
       transition: background 0.2s;
     }
     .emoji-picker span:hover {
-      background: #f8f9fa;
-    }
-    [data-bs-theme="dark"] .emoji-picker span:hover {
-      background: #495057;
+      background: #2a3942;
     }
     .message-options {
       position: absolute;
@@ -191,29 +632,20 @@
     .connection-status {
       position: fixed;
       top: 10px;
-      right: 10px;
+      left: 50%;
+      transform: translateX(-50%);
       padding: 8px 16px;
-      border-radius: 20px;
-      background: #28a745;
+      border-radius: 6px;
+      background: #00a884;
       color: white;
       font-size: 0.85rem;
       z-index: 1050;
       display: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     .connection-status.disconnected {
-      background: #dc3545;
+      background: #d9534f;
       display: block;
-    }
-    .btn {
-      transition: all 0.2s ease-in-out;
-    }
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .btn:active {
-      transform: translateY(0);
     }
     .loading-spinner {
       display: none;
@@ -223,149 +655,186 @@
     .loading-spinner.show {
       display: block;
     }
-    /* Mobile optimizations */
-    @media (max-width: 991px) {
-      #messages { height: 50vh; }
-      .message { max-width: 85%; }
-      #videoContainer video { max-width: 100%; }
+    #videoContainer {
+      position: relative;
+      background: #0b141a;
+      padding: 20px;
+      border-radius: 8px;
     }
-    @media (max-width: 576px) {
-      #messages { height: 45vh; }
-      .message { max-width: 90%; font-size: 0.9rem; }
-      .card-header { flex-direction: column !important; }
-      .input-group { flex-wrap: wrap; }
-      .input-group input[type="text"] { flex: 1 1 100%; margin-bottom: 8px; }
-      #videoContainer video { max-width: 100%; height: auto; }
+    #videoContainer video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+      background: #000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .recording { 
+      color: #d9534f; 
+      font-weight: bold; 
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    img.rounded { 
+      border-radius: 8px; 
+      max-width: 100%; 
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    img.rounded:hover {
+      transform: scale(1.02);
     }
   </style>
 </head>
-<body data-bs-theme="light">
-  <div class="container my-5">
-    <!-- Auth Section -->
-    <div id="auth" class="card mx-auto shadow" style="max-width: 420px;">
-      <div class="card-body text-center">
-        <h3 class="card-title mb-4">Welcome to ChatHub</h3>
-        <div class="mb-3">
-          <input type="text" id="username" class="form-control" placeholder="Username (optional)" aria-label="Username (optional)">
-        </div>
-        <div class="mb-3">
-          <input type="email" id="email" class="form-control" placeholder="Email address">
-        </div>
-        <div class="mb-4">
-          <input type="password" id="password" class="form-control" placeholder="Password">
-        </div>
-        <div class="mb-3">
-          <input type="tel" id="phone" class="form-control" placeholder="+1234567890">
-        </div>
-        <div class="form-check mb-3 text-start">
-          <input class="form-check-input" type="checkbox" id="useUsername">
-          <label class="form-check-label" for="useUsername">Login with username instead of email</label>
+<body>
+  <!-- Auth Section -->
+  <div id="auth" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-card-body">
+        <h3>Welcome to ChatHub</h3>
+        <input type="text" id="username" placeholder="Username (optional)" aria-label="Username (optional)">
+        <input type="email" id="email" placeholder="Email address">
+        <input type="password" id="password" placeholder="Password">
+        <input type="tel" id="phone" placeholder="+1234567890">
+        <div class="auth-checkbox">
+          <input type="checkbox" id="useUsername">
+          <label for="useUsername">Login with username instead of email</label>
         </div>
         <div id="recaptcha-container"></div>
-        <div class="d-grid gap-2">
-          <button class="btn btn-primary btn-lg" onclick="signup()">Sign Up</button>
-          <button class="btn btn-outline-success btn-lg" onclick="login()">Login</button>
-          <button class="btn btn-outline-info btn-lg" onclick="loginWithPhone()">Login with Phone</button>
+        <button class="auth-btn-primary" onclick="signup()">Sign Up</button>
+        <button class="auth-btn-secondary" onclick="login()">Login</button>
+        <button class="auth-btn-secondary" onclick="loginWithPhone()">Login with Phone</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Status Indicator -->
+  <div id="connectionStatus" class="connection-status">
+    <i class="bi bi-wifi-off"></i> Disconnected
+  </div>
+
+  <!-- Chat Section - WhatsApp Style -->
+  <div id="chat" class="whatsapp-container d-none">
+    <!-- Sidebar - Chat List -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h5>ChatHub</h5>
+        <div style="display: flex; gap: 15px;">
+          <button class="chat-input-btn" onclick="logout()" title="Logout">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-search">
+        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()">
+      </div>
+      <div class="chat-list" id="chatList">
+        <!-- Recent chats will appear here -->
+        <div class="chat-item active">
+          <div class="chat-item-avatar" id="currentChatAvatar">
+            <i class="bi bi-person"></i>
+          </div>
+          <div class="chat-item-content">
+            <div class="chat-item-name" id="currentChatName">Start a chat</div>
+            <div class="chat-item-message">Enter partner's email above</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Connection Status Indicator -->
-    <div id="connectionStatus" class="connection-status">
-      <i class="bi bi-wifi-off"></i> Disconnected
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-header-avatar" id="chatAvatar">
+            <i class="bi bi-person"></i>
+          </div>
+          <div class="chat-header-details">
+            <h6 id="chatName">Select a chat</h6>
+            <p id="chatStatus2">
+              <span id="onlineIndicator" style="display: none;">
+                <span class="online-status"></span>online
+              </span>
+            </p>
+          </div>
+        </div>
+        <div class="chat-header-actions">
+          <button onclick="toggleVideoModal()" title="Video call">
+            <i class="bi bi-camera-video"></i>
+          </button>
+          <button onclick="showNewChatPrompt()" title="New chat">
+            <i class="bi bi-chat-dots"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div id="messages" class="position-relative">
+        <div class="loading-spinner">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+      
+      <button class="scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom">
+        <i class="bi bi-arrow-down"></i>
+      </button>
+      
+      <div class="chat-input-wrapper">
+        <div class="emoji-picker" id="emojiPicker"></div>
+        <p id="recordingStatus" style="text-align: center; margin-bottom: 8px; color: #8696a0; font-size: 0.85rem;"></p>
+        <div class="chat-input-container">
+          <button class="chat-input-btn" onclick="toggleEmojiPicker()" title="Add emoji">
+            <i class="bi bi-emoji-smile"></i>
+          </button>
+          <input type="file" id="fileInput" style="display:none;">
+          <button class="chat-input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
+            <i class="bi bi-paperclip"></i>
+          </button>
+          <input type="text" id="textMsg" placeholder="Type a message" aria-label="Message">
+          <button class="chat-input-btn" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
+            <i class="bi bi-mic"></i>
+          </button>
+          <button class="chat-input-btn" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording" style="display: none;">
+            <i class="bi bi-stop-circle"></i>
+          </button>
+          <button class="chat-input-btn send" onclick="sendText()" title="Send message">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Chat Section -->
-    <div id="chat" class="d-none">
-      <div class="card shadow">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div class="d-flex align-items-center gap-2 flex-grow-1">
-            <span class="online-status" id="chatStatus" style="display: none;" title="Chat active"></span>
-            <input type="text" id="partnerEmail" class="form-control" placeholder="Partner's email, username or phone" style="max-width: 280px;">
-            <button class="btn btn-primary" onclick="startChat()">
-              <i class="bi bi-chat-dots"></i> Start Chat
-            </button>
-            <button class="btn btn-outline-primary" onclick="newChat()" title="Start a new chat">
-              <i class="bi bi-plus-circle"></i> New Chat
-            </button>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-outline-secondary" onclick="toggleTheme()" title="Toggle theme">
-              <i class="bi bi-moon-stars-fill"></i>
-            </button>
-            <button class="btn btn-outline-danger" onclick="logout()" title="Logout">
-              <i class="bi bi-box-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <div class="row g-0">
-            <!-- Video Call Area -->
-            <div class="col-lg-5 p-3 border-end">
-              <div id="videoContainer" class="d-flex flex-column gap-3 align-items-center">
-                <video id="localVideo" autoplay playsinline muted></video>
-                <video id="remoteVideo" autoplay playsinline></video>
-              </div>
-              <div class="text-center mt-3 d-flex gap-2 justify-content-center flex-wrap">
-                <button class="btn btn-success" onclick="startCall()" title="Start video call">
-                  <i class="bi bi-camera-video"></i> Start
-                </button>
-                <button class="btn btn-danger" onclick="hangup()" title="End call">
-                  <i class="bi bi-telephone-x"></i> End
-                </button>
-              </div>
-            </div>
-            <!-- Chat Area -->
-            <div class="col-lg-7 d-flex flex-column position-relative">
-              <div id="messages" class="flex-grow-1">
-                <div class="loading-spinner">
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              </div>
-              <button class="btn btn-primary btn-sm scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom">
-                <i class="bi bi-arrow-down"></i>
-              </button>
-              <div class="p-3 border-top position-relative">
-                <div class="emoji-picker" id="emojiPicker"></div>
-                <div class="input-group">
-                  <input type="text" id="textMsg" class="form-control" placeholder="Type a message..." aria-label="Message">
-                  <button class="btn btn-primary" onclick="sendText()" title="Send message">
-                    <i class="bi bi-send"></i>
-                  </button>
-                  <button class="btn btn-outline-secondary" onclick="toggleEmojiPicker()" title="Add emoji">
-                    <i class="bi bi-emoji-smile"></i>
-                  </button>
-                  <input type="file" id="fileInput" style="display:none;">
-                  <button class="btn btn-outline-secondary" onclick="document.getElementById('fileInput').click()" title="Attach file">
-                    <i class="bi bi-paperclip"></i>
-                  </button>
-                  <button class="btn btn-outline-secondary" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
-                    <i class="bi bi-mic"></i>
-                  </button>
-                  <button class="btn btn-outline-danger" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording">
-                    <i class="bi bi-stop-circle"></i>
-                  </button>
-                </div>
-                <p id="recordingStatus" class="mt-2 mb-0 text-center"></p>
-              </div>
-            </div>
-          </div>
-        </div>
+  <!-- Video Call Modal -->
+  <div id="videoModal" class="video-modal">
+    <div class="video-modal-content">
+      <div id="videoContainer" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+        <video id="localVideo" autoplay playsinline muted style="width: 100%; max-width: 350px;"></video>
+        <video id="remoteVideo" autoplay playsinline style="width: 100%; max-width: 350px;"></video>
+      </div>
+      <div class="video-controls">
+        <button class="video-btn-start" onclick="startCall()">
+          <i class="bi bi-camera-video"></i> Start Call
+        </button>
+        <button class="video-btn-end" onclick="hangup()">
+          <i class="bi bi-telephone-x"></i> End Call
+        </button>
+        <button class="auth-btn-secondary" onclick="toggleVideoModal()">
+          Close
+        </button>
       </div>
     </div>
   </div>
 
   <script>
     // Global functions that need to be accessible from onclick handlers
-    window.toggleTheme = function() {
-      const current = document.body.getAttribute('data-bs-theme');
-      const newTheme = current === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-    };
-
     window.scrollToBottom = function() {
       const el = document.getElementById('messages');
       el.scrollTop = el.scrollHeight;
@@ -376,9 +845,27 @@
       document.getElementById('emojiPicker').classList.toggle('show');
     };
 
-    // Restore theme preference
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.body.setAttribute('data-bs-theme', savedTheme);
+    window.toggleVideoModal = function() {
+      document.getElementById('videoModal').classList.toggle('show');
+    };
+
+    window.showNewChatPrompt = function() {
+      const email = prompt('Enter partner email, username, or phone:');
+      if (email) {
+        document.getElementById('partnerEmail').value = email;
+        window.startChat();
+      }
+    };
+
+    // Update chat header with partner info
+    function updateChatHeader(partnerEmail) {
+      const avatar = partnerEmail.charAt(0).toUpperCase();
+      document.getElementById('chatAvatar').innerHTML = avatar;
+      document.getElementById('currentChatAvatar').innerHTML = avatar;
+      document.getElementById('chatName').textContent = partnerEmail;
+      document.getElementById('currentChatName').textContent = partnerEmail;
+      document.getElementById('onlineIndicator').style.display = 'inline';
+    }
   </script>
 
   <script type="module">
@@ -615,13 +1102,17 @@
       document.getElementById('messages').innerHTML = '';
       document.getElementById('partnerEmail').value = '';
       document.getElementById('partnerEmail').focus();
-      document.getElementById('chatStatus').style.display = 'none';
-      alert('Enter a partner email, username, or phone number to start a new chat');
+      document.getElementById('onlineIndicator').style.display = 'none';
+      document.getElementById('chatName').textContent = 'Select a chat';
+      document.getElementById('currentChatName').textContent = 'Start a chat';
     };
 
     window.startChat = async () => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
-      if (!partnerInput) return alert('Enter a partner email, username, or phone number');
+      if (!partnerInput) {
+        alert('Enter a partner email, username, or phone number');
+        return;
+      }
 
       try {
         const partnerInputLower = partnerInput.toLowerCase();
@@ -644,14 +1135,16 @@
         }
 
         if (snapshot.empty) {
-          return alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+          alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+          return;
         }
 
         snapshot.forEach(d => partnerId = d.id);
 
         // Check if trying to chat with self
         if (partnerId === currentUser.uid) {
-          return alert('You cannot start a chat with yourself');
+          alert('You cannot start a chat with yourself');
+          return;
         }
 
         const ids = [currentUser.uid, partnerId].sort();
@@ -659,7 +1152,7 @@
         messagesRef = collection(db, 'chats', chatId, 'messages');
 
         document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        document.getElementById('chatStatus').style.display = 'inline-block';
+        updateChatHeader(partnerInput);
         loadMessages();
         listenForCalls();
         
@@ -818,7 +1311,7 @@
       // Show loading indicator
       const statusEl = document.getElementById('recordingStatus');
       statusEl.textContent = `Uploading ${file.name}...`;
-      statusEl.className = 'mt-2 mb-0 text-center text-primary';
+      statusEl.style.color = '#00a884';
       
       try {
         const path = `files/${chatId}/${Date.now()}_${file.name}`;
@@ -837,7 +1330,7 @@
         setTimeout(() => { statusEl.textContent = ''; }, 2000);
       } catch (err) {
         statusEl.textContent = 'Upload failed. Please try again.';
-        statusEl.className = 'mt-2 mb-0 text-center text-danger';
+        statusEl.style.color = '#d9534f';
         setTimeout(() => { statusEl.textContent = ''; }, 3000);
       }
       e.target.value = '';
@@ -852,9 +1345,11 @@
         mediaRecorder.ondataavailable = ev => audioChunks.push(ev.data);
         mediaRecorder.start();
         document.getElementById('recordBtn').disabled = true;
+        document.getElementById('recordBtn').style.display = 'none';
         document.getElementById('stopBtn').disabled = false;
+        document.getElementById('stopBtn').style.display = 'flex';
         document.getElementById('recordingStatus').textContent = 'Recording voice...';
-        document.getElementById('recordingStatus').className = 'mt-2 mb-0 text-center recording';
+        document.getElementById('recordingStatus').style.color = '#d9534f';
       } catch (err) { 
         alert('Microphone access required for voice recording');
         console.error(err);
@@ -872,7 +1367,7 @@
         try {
           const statusEl = document.getElementById('recordingStatus');
           statusEl.textContent = 'Uploading voice message...';
-          statusEl.className = 'mt-2 mb-0 text-center text-primary';
+          statusEl.style.color = '#00a884';
           
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
           const path = `voice/${chatId}/${Date.now()}.webm`;
@@ -884,12 +1379,15 @@
           statusEl.textContent = 'Voice message sent!';
           setTimeout(() => { statusEl.textContent = ''; }, 2000);
         } catch (err) {
-          document.getElementById('recordingStatus').textContent = 'Failed to send voice message';
-          document.getElementById('recordingStatus').className = 'mt-2 mb-0 text-center text-danger';
+          const statusEl = document.getElementById('recordingStatus');
+          statusEl.textContent = 'Failed to send voice message';
+          statusEl.style.color = '#d9534f';
           console.error(err);
         } finally {
           document.getElementById('recordBtn').disabled = false;
           document.getElementById('stopBtn').disabled = true;
+          document.getElementById('stopBtn').style.display = 'none';
+          document.getElementById('recordBtn').style.display = 'flex';
           if (mediaRecorder && mediaRecorder.stream) {
             mediaRecorder.stream.getTracks().forEach(t => t.stop());
           }
