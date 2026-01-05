@@ -423,8 +423,11 @@
     /* Mobile optimizations */
     @media (max-width: 768px) {
       .sidebar {
+        position: absolute;
         width: 100%;
         max-width: 100%;
+        height: 100vh;
+        z-index: 100;
         display: none;
       }
       
@@ -447,6 +450,17 @@
       .video-modal-content {
         width: 95%;
         padding: 15px;
+      }
+    }
+    
+    /* Bootstrap display utilities */
+    .d-md-none {
+      display: block;
+    }
+    
+    @media (min-width: 769px) {
+      .d-md-none {
+        display: none !important;
       }
     }
     
@@ -752,6 +766,9 @@
     <div class="chat-main">
       <div class="chat-header">
         <div class="chat-header-info">
+          <button class="chat-input-btn d-md-none" onclick="toggleMobileSidebar()" title="Show chats" id="mobileMenuBtn" style="margin-right: 10px;">
+            <i class="bi bi-list"></i>
+          </button>
           <div class="chat-header-avatar" id="chatAvatar">
             <i class="bi bi-person"></i>
           </div>
@@ -857,6 +874,13 @@
       }
     };
 
+    window.toggleMobileSidebar = function() {
+      const sidebar = document.querySelector('.sidebar');
+      const chatMain = document.querySelector('.chat-main');
+      sidebar.classList.toggle('show-mobile');
+      chatMain.classList.toggle('hide-mobile');
+    };
+
     // Update chat header with partner info
     function updateChatHeader(partnerEmail) {
       const avatar = partnerEmail.charAt(0).toUpperCase();
@@ -865,6 +889,12 @@
       document.getElementById('chatName').textContent = partnerEmail;
       document.getElementById('currentChatName').textContent = partnerEmail;
       document.getElementById('onlineIndicator').style.display = 'inline';
+      
+      // On mobile, hide sidebar and show chat when chat starts
+      if (window.innerWidth <= 768) {
+        document.querySelector('.sidebar').classList.remove('show-mobile');
+        document.querySelector('.chat-main').classList.remove('hide-mobile');
+      }
     }
   </script>
 
