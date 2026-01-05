@@ -1192,10 +1192,10 @@
         loadMessages();
         listenForCalls();
         
-        // Hide loading spinner after a short delay
+        // Remove loading spinner after a short delay to show empty state if no messages
         setTimeout(() => {
           const spinner = document.querySelector('.loading-spinner');
-          if (spinner) spinner.classList.remove('show');
+          if (spinner) spinner.remove();
         }, 500);
       } catch (err) {
         alert('Error starting chat: ' + err.message);
