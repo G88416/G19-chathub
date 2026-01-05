@@ -1,0 +1,23 @@
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (if added later)
+node_modules/
+
+# Build artifacts (if added later)
+dist/
+build/
+
+# Test files
+test-*.md
