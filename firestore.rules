@@ -16,7 +16,7 @@ service cloud.firestore {
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
     function isParticipant(chatId) {
       return isSignedIn() && (
-        chatId.matches('.*' + request.auth.uid + '.*')
+        chatId.matches('(^|.*_)' + request.auth.uid + '(_.*|$)')
       );
     }
     
