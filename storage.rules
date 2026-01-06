@@ -23,9 +23,19 @@ service firebase.storage {
     
     // Helper function to validate file types for general files
     function isValidFileType() {
-      return request.resource.contentType.matches('image/.*') 
-        || request.resource.contentType.matches('video/.*')
-        || request.resource.contentType.matches('audio/.*')
+      return request.resource.contentType == 'image/jpeg'
+        || request.resource.contentType == 'image/jpg'
+        || request.resource.contentType == 'image/png'
+        || request.resource.contentType == 'image/gif'
+        || request.resource.contentType == 'image/webp'
+        || request.resource.contentType == 'video/mp4'
+        || request.resource.contentType == 'video/webm'
+        || request.resource.contentType == 'video/ogg'
+        || request.resource.contentType == 'audio/mpeg'
+        || request.resource.contentType == 'audio/mp3'
+        || request.resource.contentType == 'audio/wav'
+        || request.resource.contentType == 'audio/ogg'
+        || request.resource.contentType == 'audio/webm'
         || request.resource.contentType == 'application/pdf'
         || request.resource.contentType == 'application/msword'
         || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -39,7 +49,11 @@ service firebase.storage {
     
     // Helper function to validate voice message types
     function isValidVoiceType() {
-      return request.resource.contentType.matches('audio/.*');
+      return request.resource.contentType == 'audio/webm'
+        || request.resource.contentType == 'audio/mpeg'
+        || request.resource.contentType == 'audio/mp3'
+        || request.resource.contentType == 'audio/wav'
+        || request.resource.contentType == 'audio/ogg';
     }
     
     // Files uploaded through chat (images, videos, documents)
