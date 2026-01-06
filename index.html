@@ -1052,7 +1052,6 @@
           } else {
             // Clear timeout if input becomes empty
             clearTimeout(autoStartDebounce);
-            autoStartDebounce = null;
           }
         });
       }
@@ -1230,7 +1229,7 @@
         }
 
         // Check if already chatting with this partner
-        if (partnerId === newPartnerId && messagesRef) {
+        if (partnerId === newPartnerId && messagesRef && chatId) {
           return; // Already in this chat, no need to reload
         }
 
