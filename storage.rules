@@ -11,8 +11,8 @@ service firebase.storage {
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
     function isParticipant(chatId) {
       return isSignedIn() && (
-        chatId.matches('^' + request.auth.uid + '_.+$') || 
-        chatId.matches('^.+_' + request.auth.uid + '$')
+        chatId.matches('^' + request.auth.uid + '_[^_]+$') || 
+        chatId.matches('^[^_]+_' + request.auth.uid + '$')
       );
     }
     
