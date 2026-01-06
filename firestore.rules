@@ -64,14 +64,14 @@ service cloud.firestore {
       
       // Video call signaling - offer document
       match /call/offer {
-        // Participants can read and write call offers
-        allow read, write: if isParticipant(chatId);
+        // Participants can read, write, and delete call offers
+        allow read, write, delete: if isParticipant(chatId);
       }
       
       // Video call signaling - answer document
       match /call/answer {
-        // Participants can read and write call answers
-        allow read, write: if isParticipant(chatId);
+        // Participants can read, write, and delete call answers
+        allow read, write, delete: if isParticipant(chatId);
       }
       
       // Video call ICE candidates - caller
