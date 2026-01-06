@@ -1043,7 +1043,9 @@
           if (value.length > 0) {
             // Wait 1.5 seconds after user stops typing before auto-starting
             autoStartDebounce = setTimeout(() => {
-              if (partnerInput.value.trim()) {
+              // Check again at execution time in case input was cleared
+              const currentValue = partnerInput.value.trim();
+              if (currentValue.length > 0) {
                 window.startChat(true); // Pass true to indicate auto-start
               }
             }, 1500);
@@ -1245,6 +1247,9 @@
         }, 500);
       } catch (err) {
         console.error('Error starting chat:', err);
+        if (!isAutoStart) {
+          alert('Error starting chat: ' + err.message);
+        }
       }
     };
 
