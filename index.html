@@ -944,7 +944,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, query, where, 
+             addDoc, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } 
+      from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -961,6 +963,11 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
+
+    // Configuration constants
+    const MESSAGE_LIMIT = 50; // Number of recent messages to load initially
+    const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
+    const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
 
     let currentUser = null;
     let partnerId = null;
@@ -1306,8 +1313,8 @@
     function loadMessages() {
       if (unsubMessages) unsubMessages();
       
-      // Load only recent messages (last 50) for better performance
-      const q = query(messagesRef, orderBy('timestamp'), limit(50));
+      // Load only recent messages for better performance
+      const q = query(messagesRef, orderBy('timestamp'), limit(MESSAGE_LIMIT));
       
       unsubMessages = onSnapshot(q, snap => {
         const messagesEl = document.getElementById('messages');
@@ -1461,10 +1468,10 @@
       const file = e.target.files[0];
       if (!file || !messagesRef) return;
       
-      // Validate file size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Validate file size
+      const maxSize = MAX_FILE_SIZE_MB * 1024 * 1024; // Convert MB to bytes
       if (file.size > maxSize) {
-        alert('File size too large. Maximum size is 10MB.');
+        alert(`File size too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
         e.target.value = '';
         return;
       }
@@ -1529,12 +1536,22 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // Check browser support for MediaRecorder
-        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 
-                        MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 
-                        'audio/webm'; // fallback
+        // Check browser support for MediaRecorder with proper fallback
+        let mimeType = 'audio/webm'; // Default
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+          mimeType = 'audio/ogg;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else {
+          // Let browser decide
+          mimeType = undefined;
+        }
         
-        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
         audioChunks = [];
         
         mediaRecorder.ondataavailable = ev => {
@@ -1594,10 +1611,10 @@
           
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
           
-          // Validate file size (5MB max for voice)
-          const maxSize = 5 * 1024 * 1024; // 5MB
+          // Validate file size
+          const maxSize = MAX_VOICE_SIZE_MB * 1024 * 1024; // Convert MB to bytes
           if (blob.size > maxSize) {
-            throw new Error('Voice message too long. Maximum size is 5MB.');
+            throw new Error(`Voice message too long. Maximum size is ${MAX_VOICE_SIZE_MB}MB.`);
           }
           
           if (blob.size === 0) {
@@ -1645,6 +1662,25 @@
 
     // WebRTC Video Call
     const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    // Helper function to cleanup peer connection and streams
+    function cleanupPeerConnection(peerConnection, stream, localVideoEl, remoteVideoEl) {
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      if (localVideoEl) {
+        document.getElementById(localVideoEl).srcObject = null;
+      }
+      if (remoteVideoEl) {
+        document.getElementById(remoteVideoEl).srcObject = null;
+      }
+      return { peerConnection, stream };
+    }
 
     window.startCall = async () => {
       if (!chatId) return alert('Start a chat first');
@@ -1702,10 +1738,9 @@
     }
 
     window.hangup = () => {
-      if (pc) { pc.close(); pc = null; }
-      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-      document.getElementById('localVideo').srcObject = null;
-      document.getElementById('remoteVideo').srcObject = null;
+      const cleaned = cleanupPeerConnection(pc, localStream, 'localVideo', 'remoteVideo');
+      pc = cleaned.peerConnection;
+      localStream = cleaned.stream;
       if (chatId) {
         deleteDoc(doc(db, 'chats', chatId, 'call', 'offer')).catch(() => {});
         deleteDoc(doc(db, 'chats', chatId, 'call', 'answer')).catch(() => {});
@@ -1763,8 +1798,9 @@
     };
 
     window.hangupAudio = () => {
-      if (audioPC) { audioPC.close(); audioPC = null; }
-      if (audioLocalStream) { audioLocalStream.getTracks().forEach(t => t.stop()); audioLocalStream = null; }
+      const cleaned = cleanupPeerConnection(audioPC, audioLocalStream, null, null);
+      audioPC = cleaned.peerConnection;
+      audioLocalStream = cleaned.stream;
       document.getElementById('remoteAudio').srcObject = null;
       document.getElementById('audioCallStatus').textContent = 'Call ended';
       if (chatId) {
