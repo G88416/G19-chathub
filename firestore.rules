@@ -31,9 +31,6 @@ service cloud.firestore {
       
       // Only the user can update their own profile
       allow update: if isOwner(userId);
-      
-      // Users cannot delete their profiles
-      allow delete: if false;
     }
     
     // Chats collection - stores all chat data
@@ -91,11 +88,6 @@ service cloud.firestore {
         // Participants can read and create ICE candidates
         allow read, create: if isParticipant(chatId);
       }
-    }
-    
-    // Deny all other access by default
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }

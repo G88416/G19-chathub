@@ -61,10 +61,5 @@ service firebase.storage {
         && isValidFileSize(5)
         && isValidVoiceType();
     }
-    
-    // Deny all other access by default
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
   }
 }
