@@ -968,6 +968,8 @@
     const MESSAGE_LIMIT = 50; // Number of recent messages to load initially
     const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
     const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
+    const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
+    const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
 
     let currentUser = null;
     let partnerId = null;
@@ -983,6 +985,7 @@
     let typingTimeout = null;
     let isTyping = false;
     let audioContext = null;
+    // Variables for future pagination implementation
     let lastMessageTimestamp = null;
     let isLoadingOlderMessages = false;
 
@@ -1073,7 +1076,7 @@
     function checkScrollPosition() {
       const messagesEl = document.getElementById('messages');
       const scrollBtn = document.querySelector('.scroll-to-bottom');
-      if (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight > 100) {
+      if (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight > SCROLL_BUTTON_THRESHOLD) {
         scrollBtn.classList.add('show');
       } else {
         scrollBtn.classList.remove('show');
@@ -1318,7 +1321,7 @@
       
       unsubMessages = onSnapshot(q, snap => {
         const messagesEl = document.getElementById('messages');
-        const shouldScroll = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 150;
+        const shouldScroll = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < SCROLL_THRESHOLD;
         
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
