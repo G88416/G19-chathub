@@ -23,9 +23,10 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
 - **Message Timestamps**: Know exactly when messages were sent
 - **Online Status**: See who's online
 
-### 📞 Video Calls
-- **WebRTC Video Calls**: High-quality peer-to-peer video calling
-- **Modal Interface**: Clean, focused video call experience
+### 📞 Voice & Video Calls
+- **Voice Calls**: High-quality peer-to-peer audio-only calling
+- **Video Calls**: WebRTC Video Calls with camera and audio
+- **Modal Interface**: Clean, focused call experience
 
 ### 🔐 Authentication
 - **Email/Password Login**: Standard authentication
@@ -48,8 +49,9 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
    - Begin messaging!
 4. **Send Media**: Click the attachment icon to send files
 5. **Voice Messages**: Click the microphone to record voice notes
-6. **Video Call**: Click the video camera icon to start a video call
-7. **Emojis**: Click the smile icon to open the emoji picker
+6. **Voice Call**: Click the phone icon to start an audio call
+7. **Video Call**: Click the video camera icon to start a video call
+8. **Emojis**: Click the smile icon to open the emoji picker
 
 ## Technical Details
 
@@ -72,10 +74,15 @@ All original functionality has been maintained:
 - ✅ Real-time messaging
 - ✅ File uploads and sharing
 - ✅ Voice recording
+- ✅ Voice calls (audio-only)
 - ✅ Video calls
 - ✅ Emoji support
 - ✅ Typing indicators
 - ✅ Online status
+- ✅ Message persistence (history never disappears)
+- ✅ Self-chat support
+- ✅ Connection status monitoring
+- ✅ Performance optimizations
 
 ## Development
 
