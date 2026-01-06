@@ -746,7 +746,7 @@
         </div>
       </div>
       <div class="sidebar-search">
-        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()" onblur="startChatOnBlur()">
+        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()" onblur="if(this.value.trim()) startChatOnBlur()">
       </div>
       <div class="chat-list" id="chatList">
         <!-- Recent chats will appear here -->
@@ -1049,6 +1049,10 @@
                 window.startChat(true); // Pass true to indicate auto-start
               }
             }, 1500);
+          } else {
+            // Clear timeout if input becomes empty
+            clearTimeout(autoStartDebounce);
+            autoStartDebounce = null;
           }
         });
       }
