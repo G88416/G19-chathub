@@ -947,8 +947,8 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, query, where, 
-             addDoc, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } 
+    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
+             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } 
       from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -1320,6 +1320,7 @@
       // Load recent messages for better initial load performance
       // Note: Only loads the most recent MESSAGE_LIMIT messages
       // Older messages remain in Firestore and are preserved forever
+      // Future enhancement: Implement scroll-to-load-more pagination
       const q = query(messagesRef, orderBy('timestamp'), limit(MESSAGE_LIMIT));
       
       unsubMessages = onSnapshot(q, snap => {
@@ -1684,6 +1685,13 @@
       return { peerConnection, stream };
     }
 
+    // Helper function to handle ICE candidate with error handling
+    function handleIceCandidate(peerConnection, candidateData) {
+      peerConnection.addIceCandidate(candidateData).catch(err => {
+        console.error('Error adding ICE candidate:', err);
+      });
+    }
+
     window.startCall = async () => {
       if (!chatId) return alert('Start a chat first');
       pc = new RTCPeerConnection(configuration);
@@ -1703,9 +1711,7 @@
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), snap => {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
-            pc.addIceCandidate(change.doc.data()).catch(err => {
-              console.error('Error adding ICE candidate:', err);
-            });
+            handleIceCandidate(pc, change.doc.data());
           }
         });
       });
@@ -1740,9 +1746,7 @@
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
-            pc.addIceCandidate(change.doc.data()).catch(err => {
-              console.error('Error adding ICE candidate:', err);
-            });
+            handleIceCandidate(pc, change.doc.data());
           }
         });
       });
@@ -1799,9 +1803,7 @@
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), snap => {
           snap.docChanges().forEach(change => {
             if (change.type === 'added') {
-              audioPC.addIceCandidate(change.doc.data()).catch(err => {
-                console.error('Error adding audio ICE candidate:', err);
-              });
+              handleIceCandidate(audioPC, change.doc.data());
             }
           });
         });
@@ -1870,9 +1872,7 @@
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
           snap.docChanges().forEach(change => {
             if (change.type === 'added') {
-              audioPC.addIceCandidate(change.doc.data()).catch(err => {
-                console.error('Error adding audio ICE candidate:', err);
-              });
+              handleIceCandidate(audioPC, change.doc.data());
             }
           });
         });
