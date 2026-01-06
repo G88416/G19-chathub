@@ -1220,14 +1220,6 @@
         let newPartnerId = null;
         snapshot.forEach(d => newPartnerId = d.id);
 
-        // Check if trying to chat with self
-        if (newPartnerId === currentUser.uid) {
-          if (!isAutoStart) {
-            alert('You cannot start a chat with yourself');
-          }
-          return;
-        }
-
         // Check if already chatting with this partner
         if (partnerId === newPartnerId && messagesRef && chatId) {
           return; // Already in this chat, no need to reload
