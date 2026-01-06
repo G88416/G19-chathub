@@ -746,7 +746,7 @@
         </div>
       </div>
       <div class="sidebar-search">
-        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()">
+        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()" onblur="if(this.value.trim()) startChatOnBlur()">
       </div>
       <div class="chat-list" id="chatList">
         <!-- Recent chats will appear here -->
@@ -879,6 +879,17 @@
       const chatMain = document.querySelector('.chat-main');
       sidebar.classList.toggle('show-mobile');
       chatMain.classList.toggle('hide-mobile');
+    };
+
+    // Auto-start chat functionality
+    window.startChatOnBlur = function() {
+      const input = document.getElementById('partnerEmail');
+      if (input && input.value.trim()) {
+        // Add a small delay to allow other events to complete
+        setTimeout(() => {
+          window.startChat(true); // Pass true to indicate auto-start
+        }, 200);
+      }
     };
 
     // Update chat header with partner info
@@ -1017,6 +1028,33 @@
         messagesEl.addEventListener('scroll', checkScrollPosition);
       }
       initEmojiPicker();
+      
+      // Add auto-start chat on input with debouncing
+      const partnerInput = document.getElementById('partnerEmail');
+      if (partnerInput) {
+        let autoStartDebounce = null;
+        partnerInput.addEventListener('input', (e) => {
+          // Clear existing timeout
+          if (autoStartDebounce) {
+            clearTimeout(autoStartDebounce);
+          }
+          
+          const value = e.target.value.trim();
+          if (value.length > 0) {
+            // Wait 1.5 seconds after user stops typing before auto-starting
+            autoStartDebounce = setTimeout(() => {
+              // Check again at execution time in case input was cleared
+              const currentValue = partnerInput.value.trim();
+              if (currentValue.length > 0) {
+                window.startChat(true); // Pass true to indicate auto-start
+              }
+            }, 1500);
+          } else {
+            // Clear timeout if input becomes empty
+            clearTimeout(autoStartDebounce);
+          }
+        });
+      }
     });
 
     window.signup = async () => {
@@ -1137,10 +1175,12 @@
       document.getElementById('currentChatName').textContent = 'Start a chat';
     };
 
-    window.startChat = async () => {
+    window.startChat = async (isAutoStart = false) => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
       if (!partnerInput) {
-        alert('Enter a partner email, username, or phone number');
+        if (!isAutoStart) {
+          alert('Enter a partner email, username, or phone number');
+        }
         return;
       }
 
@@ -1171,18 +1211,29 @@
         }
 
         if (snapshot.empty) {
-          alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+          if (!isAutoStart) {
+            alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+          }
           return;
         }
 
-        snapshot.forEach(d => partnerId = d.id);
+        let newPartnerId = null;
+        snapshot.forEach(d => newPartnerId = d.id);
 
         // Check if trying to chat with self
-        if (partnerId === currentUser.uid) {
-          alert('You cannot start a chat with yourself');
+        if (newPartnerId === currentUser.uid) {
+          if (!isAutoStart) {
+            alert('You cannot start a chat with yourself');
+          }
           return;
         }
 
+        // Check if already chatting with this partner
+        if (partnerId === newPartnerId && messagesRef && chatId) {
+          return; // Already in this chat, no need to reload
+        }
+
+        partnerId = newPartnerId;
         const ids = [currentUser.uid, partnerId].sort();
         chatId = ids.join('_');
         messagesRef = collection(db, 'chats', chatId, 'messages');
@@ -1198,8 +1249,10 @@
           if (spinner) spinner.remove();
         }, 500);
       } catch (err) {
-        alert('Error starting chat: ' + err.message);
-        console.error(err);
+        console.error('Error starting chat:', err);
+        if (!isAutoStart) {
+          alert('Error starting chat: ' + err.message);
+        }
       }
     };
 
