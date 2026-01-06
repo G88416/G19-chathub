@@ -882,13 +882,12 @@
     };
 
     // Auto-start chat functionality
-    let autoStartTimeout = null;
     window.startChatOnBlur = function() {
       const input = document.getElementById('partnerEmail');
       if (input && input.value.trim()) {
         // Add a small delay to allow other events to complete
         setTimeout(() => {
-          window.startChat();
+          window.startChat(true); // Pass true to indicate auto-start
         }, 200);
       }
     };
@@ -1045,7 +1044,7 @@
             // Wait 1.5 seconds after user stops typing before auto-starting
             autoStartDebounce = setTimeout(() => {
               if (partnerInput.value.trim()) {
-                window.startChat();
+                window.startChat(true); // Pass true to indicate auto-start
               }
             }, 1500);
           }
@@ -1171,10 +1170,13 @@
       document.getElementById('currentChatName').textContent = 'Start a chat';
     };
 
-    window.startChat = async () => {
+    window.startChat = async (isAutoStart = false) => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
       if (!partnerInput) {
-        return; // Silently return if empty (for auto-start)
+        if (!isAutoStart) {
+          alert('Enter a partner email, username, or phone number');
+        }
+        return;
       }
 
       try {
@@ -1204,8 +1206,9 @@
         }
 
         if (snapshot.empty) {
-          // Only show alert if user manually triggered (not auto-start)
-          // Auto-start should fail silently
+          if (!isAutoStart) {
+            alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
+          }
           return;
         }
 
@@ -1214,7 +1217,10 @@
 
         // Check if trying to chat with self
         if (newPartnerId === currentUser.uid) {
-          return; // Silently return for auto-start
+          if (!isAutoStart) {
+            alert('You cannot start a chat with yourself');
+          }
+          return;
         }
 
         // Check if already chatting with this partner
