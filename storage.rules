@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
+    function isParticipant(chatId) {
+      return isSignedIn() && (
+        chatId.matches('.*' + request.auth.uid + '.*')
+      );
+    }
+    
+    // Helper function to validate file size (max 10MB for files, 5MB for voice)
+    function isValidFileSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    // Helper function to validate file types for general files
+    function isValidFileType() {
+      return request.resource.contentType.matches('image/.*') 
+        || request.resource.contentType.matches('video/.*')
+        || request.resource.contentType.matches('audio/.*')
+        || request.resource.contentType == 'application/pdf'
+        || request.resource.contentType.matches('application/.*document.*')
+        || request.resource.contentType.matches('text/.*');
+    }
+    
+    // Helper function to validate voice message types
+    function isValidVoiceType() {
+      return request.resource.contentType.matches('audio/.*');
+    }
+    
+    // Files uploaded through chat (images, videos, documents)
+    match /files/{chatId}/{fileName} {
+      // Participants can read files from their chats
+      allow read: if isParticipant(chatId);
+      
+      // Participants can upload files to their chats
+      // Max file size: 10MB
+      // Must be a valid file type
+      allow create: if isParticipant(chatId)
+        && isValidFileSize(10)
+        && isValidFileType();
+      
+      // No updates or deletes allowed (files are immutable)
+      allow update, delete: if false;
+    }
+    
+    // Voice messages
+    match /voice/{chatId}/{fileName} {
+      // Participants can read voice messages from their chats
+      allow read: if isParticipant(chatId);
+      
+      // Participants can upload voice messages to their chats
+      // Max file size: 5MB for voice messages
+      // Must be audio type
+      allow create: if isParticipant(chatId)
+        && isValidFileSize(5)
+        && isValidVoiceType();
+      
+      // No updates or deletes allowed (voice messages are immutable)
+      allow update, delete: if false;
+    }
+    
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
