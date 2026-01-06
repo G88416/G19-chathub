@@ -11,7 +11,8 @@ service firebase.storage {
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
     function isParticipant(chatId) {
       return isSignedIn() && (
-        chatId.matches('(^|.*_)' + request.auth.uid + '(_.*|$)')
+        chatId.matches('^' + request.auth.uid + '_.*$') || 
+        chatId.matches('^.*_' + request.auth.uid + '$')
       );
     }
     
@@ -46,9 +47,6 @@ service firebase.storage {
       allow create: if isParticipant(chatId)
         && isValidFileSize(10)
         && isValidFileType();
-      
-      // No updates or deletes allowed (files are immutable)
-      allow update, delete: if false;
     }
     
     // Voice messages
@@ -62,9 +60,6 @@ service firebase.storage {
       allow create: if isParticipant(chatId)
         && isValidFileSize(5)
         && isValidVoiceType();
-      
-      // No updates or deletes allowed (voice messages are immutable)
-      allow update, delete: if false;
     }
     
     // Deny all other access by default

@@ -16,7 +16,8 @@ service cloud.firestore {
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
     function isParticipant(chatId) {
       return isSignedIn() && (
-        chatId.matches('(^|.*_)' + request.auth.uid + '(_.*|$)')
+        chatId.matches('^' + request.auth.uid + '_.*$') || 
+        chatId.matches('^.*_' + request.auth.uid + '$')
       );
     }
     
@@ -54,10 +55,6 @@ service cloud.firestore {
           && isSignedIn()
           && request.resource.data.senderId == request.auth.uid
           && request.resource.data.timestamp == request.time;
-        
-        // No updates or deletes allowed on messages (immutable)
-        allow update: if false;
-        allow delete: if false;
       }
       
       // Typing status subcollection
@@ -87,14 +84,12 @@ service cloud.firestore {
       match /call/candidates/caller/{candidateId} {
         // Participants can read and create ICE candidates
         allow read, create: if isParticipant(chatId);
-        allow update, delete: if false;
       }
       
       // Video call ICE candidates - callee
       match /call/candidates/callee/{candidateId} {
         // Participants can read and create ICE candidates
         allow read, create: if isParticipant(chatId);
-        allow update, delete: if false;
       }
     }
     
