@@ -103,8 +103,8 @@ Example: If user `abc123` chats with user `xyz789`, the chatId will be `abc123_x
 
 This ensures:
 - Same chatId is used regardless of who initiates the chat
-- The `isParticipant()` helper verifies exact boundary matching: the userId must be either at the start followed by `_`, or at the end preceded by `_`
-- This prevents substring vulnerabilities where 'abc' could match 'xabcy'
+- The `isParticipant()` helper verifies exact boundary matching with `.+` (one or more characters): the userId must be either at the start followed by `_` and another userId, or at the end preceded by `_` and another userId
+- This prevents substring vulnerabilities and empty participant IDs (e.g., 'abc' won't match 'xabcy', and 'user_' is invalid)
 
 ## Testing Rules
 

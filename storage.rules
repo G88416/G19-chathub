@@ -11,8 +11,8 @@ service firebase.storage {
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
     function isParticipant(chatId) {
       return isSignedIn() && (
-        chatId.matches('^' + request.auth.uid + '_.*$') || 
-        chatId.matches('^.*_' + request.auth.uid + '$')
+        chatId.matches('^' + request.auth.uid + '_.+$') || 
+        chatId.matches('^.+_' + request.auth.uid + '$')
       );
     }
     
@@ -24,7 +24,6 @@ service firebase.storage {
     // Helper function to validate file types for general files
     function isValidFileType() {
       return request.resource.contentType == 'image/jpeg'
-        || request.resource.contentType == 'image/jpg'
         || request.resource.contentType == 'image/png'
         || request.resource.contentType == 'image/gif'
         || request.resource.contentType == 'image/webp'
@@ -32,7 +31,6 @@ service firebase.storage {
         || request.resource.contentType == 'video/webm'
         || request.resource.contentType == 'video/ogg'
         || request.resource.contentType == 'audio/mpeg'
-        || request.resource.contentType == 'audio/mp3'
         || request.resource.contentType == 'audio/wav'
         || request.resource.contentType == 'audio/ogg'
         || request.resource.contentType == 'audio/webm'
@@ -51,7 +49,6 @@ service firebase.storage {
     function isValidVoiceType() {
       return request.resource.contentType == 'audio/webm'
         || request.resource.contentType == 'audio/mpeg'
-        || request.resource.contentType == 'audio/mp3'
         || request.resource.contentType == 'audio/wav'
         || request.resource.contentType == 'audio/ogg';
     }
