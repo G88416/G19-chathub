@@ -1694,22 +1694,27 @@
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer });
+      await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer, type: 'video' });
       onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
         if (snap.exists() && !pc.currentRemoteDescription) pc.setRemoteDescription(snap.data().answer);
       });
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), snap => {
         snap.docChanges().forEach(change => {
-          if (change.type === 'added') pc.addIceCandidate(change.doc.data());
+          if (change.type === 'added') {
+            pc.addIceCandidate(change.doc.data()).catch(err => {
+              console.error('Error adding ICE candidate:', err);
+            });
+          }
         });
       });
     };
 
     function listenForCalls() {
       onSnapshot(doc(db, 'chats', chatId, 'call', 'offer'), async snap => {
-        if (snap.exists() && !pc) {
+        const data = snap.data();
+        if (snap.exists() && !pc && (!data || data.type !== 'audio')) {
           if (confirm('Incoming video call – answer?')) {
-            await answerCall(snap.data().offer);
+            await answerCall(data ? data.offer : snap.data().offer);
           } else {
             deleteDoc(snap.ref);
           }
@@ -1732,7 +1737,11 @@
       await setDoc(doc(db, 'chats', chatId, 'call', 'answer'), { answer });
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
         snap.docChanges().forEach(change => {
-          if (change.type === 'added') pc.addIceCandidate(change.doc.data());
+          if (change.type === 'added') {
+            pc.addIceCandidate(change.doc.data()).catch(err => {
+              console.error('Error adding ICE candidate:', err);
+            });
+          }
         });
       });
     }
@@ -1787,7 +1796,11 @@
         
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), snap => {
           snap.docChanges().forEach(change => {
-            if (change.type === 'added') audioPC.addIceCandidate(change.doc.data());
+            if (change.type === 'added') {
+              audioPC.addIceCandidate(change.doc.data()).catch(err => {
+                console.error('Error adding audio ICE candidate:', err);
+              });
+            }
           });
         });
       } catch (err) {
@@ -1854,7 +1867,11 @@
         
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
           snap.docChanges().forEach(change => {
-            if (change.type === 'added') audioPC.addIceCandidate(change.doc.data());
+            if (change.type === 'added') {
+              audioPC.addIceCandidate(change.doc.data()).catch(err => {
+                console.error('Error adding audio ICE candidate:', err);
+              });
+            }
           });
         });
       } catch (err) {
