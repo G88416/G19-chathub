@@ -895,7 +895,10 @@
     };
 
     window.toggleAudioCallModal = function() {
-      document.getElementById('audioModal').classList.toggle('show');
+      const modal = document.getElementById('audioModal');
+      if (modal) {
+        modal.classList.toggle('show');
+      }
     };
 
     window.showNewChatPrompt = function() {
@@ -985,6 +988,7 @@
     let typingTimeout = null;
     let isTyping = false;
     let audioContext = null;
+    let recordingMimeType = 'audio/webm'; // Track MIME type used for recording
 
     // Emoji picker data
     const emojis = [
@@ -1548,6 +1552,7 @@
           mimeType = undefined;
         }
         
+        recordingMimeType = mimeType || 'audio/webm'; // Store for blob creation
         mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
         audioChunks = [];
         
@@ -1606,7 +1611,7 @@
             throw new Error('No audio data recorded');
           }
           
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const blob = new Blob(audioChunks, { type: recordingMimeType });
           
           // Validate file size
           const maxSize = MAX_VOICE_SIZE_MB * 1024 * 1024; // Convert MB to bytes
@@ -1709,7 +1714,7 @@
     function listenForCalls() {
       onSnapshot(doc(db, 'chats', chatId, 'call', 'offer'), async snap => {
         const data = snap.data();
-        if (snap.exists() && !pc && (!data || data.type !== 'audio')) {
+        if (snap.exists() && !pc && data?.type !== 'audio') {
           if (confirm('Incoming video call – answer?')) {
             await answerCall(data.offer);
           } else {
