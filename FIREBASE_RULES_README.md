@@ -90,6 +90,7 @@ The Storage rules protect:
 4. **Immutability**: Messages and files cannot be edited or deleted
 5. **Size Limits**: File uploads are limited to prevent abuse
 6. **Type Validation**: File types are restricted to safe formats
+7. **Auto-Start Support**: Rules allow participants to automatically start/join chats and read chat metadata for seamless user experience
 
 ## chatId Format
 

@@ -36,9 +36,11 @@ service cloud.firestore {
     // Chats collection - stores all chat data
     match /chats/{chatId} {
       // Only participants can read chat metadata
+      // This allows auto-start chat feature to check for existing chats
       allow read: if isParticipant(chatId);
       
       // Participants can create chat (implicitly created when adding messages)
+      // This supports both manual and auto-start chat creation
       allow create: if isParticipant(chatId);
       
       // Messages subcollection
