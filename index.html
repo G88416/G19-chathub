@@ -985,9 +985,6 @@
     let typingTimeout = null;
     let isTyping = false;
     let audioContext = null;
-    // Variables for future pagination implementation
-    let lastMessageTimestamp = null;
-    let isLoadingOlderMessages = false;
 
     // Emoji picker data
     const emojis = [
@@ -1316,7 +1313,9 @@
     function loadMessages() {
       if (unsubMessages) unsubMessages();
       
-      // Load only recent messages for better performance
+      // Load recent messages for better initial load performance
+      // Note: Only loads the most recent MESSAGE_LIMIT messages
+      // Older messages remain in Firestore and are preserved forever
       const q = query(messagesRef, orderBy('timestamp'), limit(MESSAGE_LIMIT));
       
       unsubMessages = onSnapshot(q, snap => {
@@ -1327,11 +1326,6 @@
           if (change.type === 'added') {
             const data = change.doc.data();
             displayMessage(data, change.doc.id);
-            
-            // Track the oldest message timestamp for pagination
-            if (!lastMessageTimestamp || (data.timestamp && data.timestamp < lastMessageTimestamp)) {
-              lastMessageTimestamp = data.timestamp;
-            }
             
             // Play notification sound for new messages from others
             if (data.senderId !== currentUser.uid && document.hidden) {
@@ -1554,7 +1548,7 @@
           mimeType = undefined;
         }
         
-        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
         audioChunks = [];
         
         mediaRecorder.ondataavailable = ev => {
@@ -1717,7 +1711,7 @@
         const data = snap.data();
         if (snap.exists() && !pc && (!data || data.type !== 'audio')) {
           if (confirm('Incoming video call – answer?')) {
-            await answerCall(data ? data.offer : snap.data().offer);
+            await answerCall(data.offer);
           } else {
             deleteDoc(snap.ref);
           }
