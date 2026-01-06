@@ -1139,68 +1139,25 @@
 
     window.startChat = async () => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
-      if (!partnerInput) {
-        alert('Enter a partner email, username, or phone number');
-        return;
+      if (!partnerInput) return alert('Enter partner email');
+
+      const partnerLower = partnerInput.toLowerCase();
+      const q = query(collection(db, 'users'), where('emailLower', '==', partnerLower));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        return alert('User not found – double-check email (case-insensitive now) or have them re-login');
       }
 
-      try {
-        const partnerInputLower = partnerInput.toLowerCase();
-        let snapshot;
+      snapshot.forEach(d => partnerId = d.id);
 
-        // Try to find user by email first (case-insensitive with emailLower)
-        let q = query(collection(db, 'users'), where('emailLower', '==', partnerInputLower));
-        snapshot = await getDocs(q);
+      const ids = [currentUser.uid, partnerId].sort();
+      chatId = ids.join('_');
+      messagesRef = collection(db, 'chats', chatId, 'messages');
 
-        // If not found by emailLower, try the original email field (for backwards compatibility)
-        if (snapshot.empty) {
-          q = query(collection(db, 'users'), where('email', '==', partnerInput));
-          snapshot = await getDocs(q);
-        }
-
-        // If not found by email, try username
-        if (snapshot.empty) {
-          q = query(collection(db, 'users'), where('username', '==', partnerInputLower));
-          snapshot = await getDocs(q);
-        }
-
-        // If not found by username, try phone number
-        if (snapshot.empty) {
-          q = query(collection(db, 'users'), where('phone', '==', partnerInput));
-          snapshot = await getDocs(q);
-        }
-
-        if (snapshot.empty) {
-          alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
-          return;
-        }
-
-        snapshot.forEach(d => partnerId = d.id);
-
-        // Check if trying to chat with self
-        if (partnerId === currentUser.uid) {
-          alert('You cannot start a chat with yourself');
-          return;
-        }
-
-        const ids = [currentUser.uid, partnerId].sort();
-        chatId = ids.join('_');
-        messagesRef = collection(db, 'chats', chatId, 'messages');
-
-        document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        updateChatHeader(partnerInput);
-        loadMessages();
-        listenForCalls();
-        
-        // Remove loading spinner after a short delay to show empty state if no messages
-        setTimeout(() => {
-          const spinner = document.querySelector('.loading-spinner');
-          if (spinner) spinner.remove();
-        }, 500);
-      } catch (err) {
-        alert('Error starting chat: ' + err.message);
-        console.error(err);
-      }
+      document.getElementById('messages').innerHTML = '';
+      loadMessages();
+      listenForCalls();
     };
 
     function loadMessages() {
