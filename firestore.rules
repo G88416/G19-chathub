@@ -45,15 +45,22 @@ service cloud.firestore {
       // This supports both manual and auto-start chat creation
       allow create: if isParticipant(chatId);
       
+      // Allow participants to update chat metadata (for last message, etc.)
+      allow update: if isParticipant(chatId);
+      
       // Messages subcollection
       match /messages/{messageId} {
         // Participants can read all messages in their chats
+        // Messages are never deleted to maintain chat history
         allow read: if isParticipant(chatId);
         
         // Participants can send messages (create)
         // Must include senderId that matches authenticated user
         allow create: if isParticipant(chatId) 
           && request.resource.data.senderId == request.auth.uid;
+        
+        // Messages cannot be updated or deleted to preserve chat history
+        // This ensures chat history is always available
       }
       
       // Typing status subcollection
@@ -66,28 +73,34 @@ service cloud.firestore {
           && request.resource.data.userId == request.auth.uid;
       }
       
-      // Video call signaling - offer document
+      // Video/Voice call signaling - offer document
       match /call/offer {
         // Participants can read, write, and delete call offers
         allow read, write, delete: if isParticipant(chatId);
       }
       
-      // Video call signaling - answer document
+      // Video/Voice call signaling - answer document
       match /call/answer {
         // Participants can read, write, and delete call answers
         allow read, write, delete: if isParticipant(chatId);
       }
       
-      // Video call ICE candidates - caller
+      // Video/Voice call ICE candidates - caller
       match /call/candidates/caller/{candidateId} {
         // Participants can read and create ICE candidates
         allow read, create: if isParticipant(chatId);
       }
       
-      // Video call ICE candidates - callee
+      // Video/Voice call ICE candidates - callee
       match /call/candidates/callee/{candidateId} {
         // Participants can read and create ICE candidates
         allow read, create: if isParticipant(chatId);
+      }
+      
+      // Call state management for tracking active calls
+      match /call/state {
+        // Participants can read, write, and delete call state
+        allow read, write, delete: if isParticipant(chatId);
       }
     }
   }

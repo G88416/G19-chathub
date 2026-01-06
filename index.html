@@ -782,6 +782,9 @@
           </div>
         </div>
         <div class="chat-header-actions">
+          <button onclick="toggleAudioCallModal()" title="Voice call">
+            <i class="bi bi-telephone"></i>
+          </button>
           <button onclick="toggleVideoModal()" title="Video call">
             <i class="bi bi-camera-video"></i>
           </button>
@@ -850,6 +853,31 @@
     </div>
   </div>
 
+  <!-- Audio Call Modal -->
+  <div id="audioModal" class="video-modal">
+    <div class="video-modal-content">
+      <div id="audioContainer" style="text-align: center; padding: 40px;">
+        <div style="margin-bottom: 30px;">
+          <i class="bi bi-telephone" style="font-size: 4rem; color: #00a884;"></i>
+        </div>
+        <h5 style="color: #e9edef; margin-bottom: 10px;">Voice Call</h5>
+        <p id="audioCallStatus" style="color: #8696a0;">Connecting...</p>
+        <audio id="remoteAudio" autoplay></audio>
+      </div>
+      <div class="video-controls">
+        <button class="video-btn-start" onclick="startAudioCall()">
+          <i class="bi bi-telephone"></i> Start Call
+        </button>
+        <button class="video-btn-end" onclick="hangupAudio()">
+          <i class="bi bi-telephone-x"></i> End Call
+        </button>
+        <button class="auth-btn-secondary" onclick="toggleAudioCallModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Global functions that need to be accessible from onclick handlers
     window.scrollToBottom = function() {
@@ -864,6 +892,10 @@
 
     window.toggleVideoModal = function() {
       document.getElementById('videoModal').classList.toggle('show');
+    };
+
+    window.toggleAudioCallModal = function() {
+      document.getElementById('audioModal').classList.toggle('show');
     };
 
     window.showNewChatPrompt = function() {
@@ -912,7 +944,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -939,9 +971,13 @@
     let audioChunks = [];
     let pc = null;
     let localStream = null;
+    let audioPC = null;
+    let audioLocalStream = null;
     let typingTimeout = null;
     let isTyping = false;
     let audioContext = null;
+    let lastMessageTimestamp = null;
+    let isLoadingOlderMessages = false;
 
     // Emoji picker data
     const emojis = [
@@ -971,6 +1007,22 @@
         span.onclick = () => insertEmoji(emoji);
         picker.appendChild(span);
       });
+    }
+
+    // Monitor connection status
+    function monitorConnection() {
+      window.addEventListener('online', () => {
+        document.getElementById('connectionStatus').classList.remove('disconnected');
+      });
+      
+      window.addEventListener('offline', () => {
+        document.getElementById('connectionStatus').classList.add('disconnected');
+      });
+      
+      // Check initial state
+      if (!navigator.onLine) {
+        document.getElementById('connectionStatus').classList.add('disconnected');
+      }
     }
 
     function insertEmoji(emoji) {
@@ -1028,6 +1080,7 @@
         messagesEl.addEventListener('scroll', checkScrollPosition);
       }
       initEmojiPicker();
+      monitorConnection();
       
       // Add auto-start chat on input with debouncing
       const partnerInput = document.getElementById('partnerEmail');
@@ -1158,6 +1211,7 @@
         document.getElementById('chat').classList.add('d-none');
         if (unsubMessages) unsubMessages();
         window.hangup();
+        window.hangupAudio();
       }
     });
 
@@ -1234,6 +1288,7 @@
         updateChatHeader(partnerInput);
         loadMessages();
         listenForCalls();
+        listenForAudioCalls();
         
         // Remove loading spinner after a short delay to show empty state if no messages
         setTimeout(() => {
@@ -1250,20 +1305,37 @@
 
     function loadMessages() {
       if (unsubMessages) unsubMessages();
-      const q = query(messagesRef, orderBy('timestamp'));
+      
+      // Load only recent messages (last 50) for better performance
+      const q = query(messagesRef, orderBy('timestamp'), limit(50));
+      
       unsubMessages = onSnapshot(q, snap => {
+        const messagesEl = document.getElementById('messages');
+        const shouldScroll = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 150;
+        
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
             const data = change.doc.data();
             displayMessage(data, change.doc.id);
+            
+            // Track the oldest message timestamp for pagination
+            if (!lastMessageTimestamp || (data.timestamp && data.timestamp < lastMessageTimestamp)) {
+              lastMessageTimestamp = data.timestamp;
+            }
+            
             // Play notification sound for new messages from others
             if (data.senderId !== currentUser.uid && document.hidden) {
               playNotificationSound();
             }
           }
         });
-        window.scrollToBottom();
+        
+        // Auto-scroll only if user was near the bottom
+        if (shouldScroll) {
+          window.scrollToBottom();
+        }
       });
+      
       // Listen for typing status
       onSnapshot(doc(db, 'chats', chatId, 'status', 'typing'), snap => {
         const data = snap.data();
@@ -1389,16 +1461,30 @@
       const file = e.target.files[0];
       if (!file || !messagesRef) return;
       
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        alert('File size too large. Maximum size is 10MB.');
+        e.target.value = '';
+        return;
+      }
+      
       // Show loading indicator
       const statusEl = document.getElementById('recordingStatus');
       statusEl.textContent = `Uploading ${file.name}...`;
       statusEl.style.color = '#00a884';
       
+      // Disable file input during upload
+      e.target.disabled = true;
+      
       try {
         const path = `files/${chatId}/${Date.now()}_${file.name}`;
         const sref = storageRef(storage, path);
+        
+        // Upload with progress tracking
         await uploadBytes(sref, file);
         const url = await getDownloadURL(sref);
+        
         await addDoc(messagesRef, {
           senderId: currentUser.uid,
           type: 'file',
@@ -1407,23 +1493,63 @@
           mime: file.type || 'application/octet-stream',
           timestamp: serverTimestamp()
         });
+        
         statusEl.textContent = 'File uploaded successfully!';
         setTimeout(() => { statusEl.textContent = ''; }, 2000);
       } catch (err) {
-        statusEl.textContent = 'Upload failed. Please try again.';
+        console.error('Upload error:', err);
+        let errorMsg = 'Upload failed. ';
+        
+        if (err.code === 'storage/unauthorized') {
+          errorMsg += 'Permission denied. Please check your access.';
+        } else if (err.code === 'storage/canceled') {
+          errorMsg += 'Upload was cancelled.';
+        } else if (err.code === 'storage/unknown') {
+          errorMsg += 'An unknown error occurred.';
+        } else {
+          errorMsg += err.message || 'Please try again.';
+        }
+        
+        statusEl.textContent = errorMsg;
         statusEl.style.color = '#d9534f';
-        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        setTimeout(() => { statusEl.textContent = ''; }, 4000);
+      } finally {
+        e.target.value = '';
+        e.target.disabled = false;
       }
-      e.target.value = '';
     });
 
     // Voice recording
     window.startVoiceRecording = async () => {
+      if (!messagesRef) {
+        alert('Please start a chat first');
+        return;
+      }
+      
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        
+        // Check browser support for MediaRecorder
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 
+                        MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 
+                        'audio/webm'; // fallback
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
         audioChunks = [];
-        mediaRecorder.ondataavailable = ev => audioChunks.push(ev.data);
+        
+        mediaRecorder.ondataavailable = ev => {
+          if (ev.data.size > 0) {
+            audioChunks.push(ev.data);
+          }
+        };
+        
+        mediaRecorder.onerror = (err) => {
+          console.error('MediaRecorder error:', err);
+          document.getElementById('recordingStatus').textContent = 'Recording error occurred';
+          document.getElementById('recordingStatus').style.color = '#d9534f';
+          stopRecordingCleanup();
+        };
+        
         mediaRecorder.start();
         document.getElementById('recordBtn').disabled = true;
         document.getElementById('recordBtn').style.display = 'none';
@@ -1432,14 +1558,26 @@
         document.getElementById('recordingStatus').textContent = 'Recording voice...';
         document.getElementById('recordingStatus').style.color = '#d9534f';
       } catch (err) { 
-        alert('Microphone access required for voice recording');
-        console.error(err);
+        console.error('Microphone access error:', err);
+        let errorMsg = 'Microphone access required for voice recording. ';
+        
+        if (err.name === 'NotAllowedError') {
+          errorMsg += 'Please allow microphone access in your browser settings.';
+        } else if (err.name === 'NotFoundError') {
+          errorMsg += 'No microphone found on your device.';
+        } else {
+          errorMsg += err.message;
+        }
+        
+        alert(errorMsg);
+        stopRecordingCleanup();
       }
     };
 
     window.stopVoiceRecording = async () => {
       if (!mediaRecorder || mediaRecorder.state === 'inactive') {
         console.warn('No active recording to stop');
+        stopRecordingCleanup();
         return;
       }
       
@@ -1450,31 +1588,60 @@
           statusEl.textContent = 'Uploading voice message...';
           statusEl.style.color = '#00a884';
           
+          if (audioChunks.length === 0) {
+            throw new Error('No audio data recorded');
+          }
+          
           const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          
+          // Validate file size (5MB max for voice)
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          if (blob.size > maxSize) {
+            throw new Error('Voice message too long. Maximum size is 5MB.');
+          }
+          
+          if (blob.size === 0) {
+            throw new Error('Empty audio file. Please try recording again.');
+          }
+          
           const path = `voice/${chatId}/${Date.now()}.webm`;
           const sref = storageRef(storage, path);
           await uploadBytes(sref, blob);
           const url = await getDownloadURL(sref);
-          await addDoc(messagesRef, { senderId: currentUser.uid, type: 'voice', url, timestamp: serverTimestamp() });
+          await addDoc(messagesRef, { 
+            senderId: currentUser.uid, 
+            type: 'voice', 
+            url, 
+            timestamp: serverTimestamp() 
+          });
           
           statusEl.textContent = 'Voice message sent!';
           setTimeout(() => { statusEl.textContent = ''; }, 2000);
         } catch (err) {
+          console.error('Voice upload error:', err);
           const statusEl = document.getElementById('recordingStatus');
-          statusEl.textContent = 'Failed to send voice message';
+          statusEl.textContent = err.message || 'Failed to send voice message';
           statusEl.style.color = '#d9534f';
-          console.error(err);
+          setTimeout(() => { statusEl.textContent = ''; }, 3000);
         } finally {
-          document.getElementById('recordBtn').disabled = false;
-          document.getElementById('stopBtn').disabled = true;
-          document.getElementById('stopBtn').style.display = 'none';
-          document.getElementById('recordBtn').style.display = 'flex';
-          if (mediaRecorder && mediaRecorder.stream) {
-            mediaRecorder.stream.getTracks().forEach(t => t.stop());
-          }
+          stopRecordingCleanup();
         }
       };
     };
+
+    function stopRecordingCleanup() {
+      document.getElementById('recordBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      document.getElementById('stopBtn').style.display = 'none';
+      document.getElementById('recordBtn').style.display = 'flex';
+      
+      if (mediaRecorder && mediaRecorder.stream) {
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      }
+      
+      mediaRecorder = null;
+      audioChunks = [];
+    }
 
     // WebRTC Video Call
     const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
@@ -1544,6 +1711,122 @@
         deleteDoc(doc(db, 'chats', chatId, 'call', 'answer')).catch(() => {});
       }
     };
+
+    // Audio Call Functions
+    window.startAudioCall = async () => {
+      if (!chatId) return alert('Start a chat first');
+      try {
+        audioPC = new RTCPeerConnection(configuration);
+        audioLocalStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        audioLocalStream.getTracks().forEach(track => audioPC.addTrack(track, audioLocalStream));
+        
+        audioPC.ontrack = ev => {
+          document.getElementById('remoteAudio').srcObject = ev.streams[0];
+          document.getElementById('audioCallStatus').textContent = 'Call connected';
+        };
+        
+        audioPC.onicecandidate = ev => {
+          if (ev.candidate) addDoc(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), ev.candidate.toJSON());
+        };
+        
+        audioPC.oniceconnectionstatechange = () => {
+          const state = audioPC.iceConnectionState;
+          if (state === 'connected') {
+            document.getElementById('audioCallStatus').textContent = 'Call connected';
+          } else if (state === 'disconnected' || state === 'failed') {
+            document.getElementById('audioCallStatus').textContent = 'Call ended';
+          }
+        };
+        
+        const offer = await audioPC.createOffer();
+        await audioPC.setLocalDescription(offer);
+        await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer, type: 'audio' });
+        document.getElementById('audioCallStatus').textContent = 'Calling...';
+        
+        onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
+          if (snap.exists() && !audioPC.currentRemoteDescription) {
+            audioPC.setRemoteDescription(snap.data().answer);
+            document.getElementById('audioCallStatus').textContent = 'Call connected';
+          }
+        });
+        
+        onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), snap => {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added') audioPC.addIceCandidate(change.doc.data());
+          });
+        });
+      } catch (err) {
+        console.error('Error starting audio call:', err);
+        alert('Could not start audio call: ' + err.message);
+        document.getElementById('audioCallStatus').textContent = 'Call failed';
+      }
+    };
+
+    window.hangupAudio = () => {
+      if (audioPC) { audioPC.close(); audioPC = null; }
+      if (audioLocalStream) { audioLocalStream.getTracks().forEach(t => t.stop()); audioLocalStream = null; }
+      document.getElementById('remoteAudio').srcObject = null;
+      document.getElementById('audioCallStatus').textContent = 'Call ended';
+      if (chatId) {
+        deleteDoc(doc(db, 'chats', chatId, 'call', 'offer')).catch(() => {});
+        deleteDoc(doc(db, 'chats', chatId, 'call', 'answer')).catch(() => {});
+      }
+    };
+
+    function listenForAudioCalls() {
+      onSnapshot(doc(db, 'chats', chatId, 'call', 'offer'), async snap => {
+        if (snap.exists() && snap.data().type === 'audio' && !audioPC) {
+          if (confirm('Incoming voice call – answer?')) {
+            document.getElementById('audioModal').classList.add('show');
+            await answerAudioCall(snap.data().offer);
+          } else {
+            deleteDoc(snap.ref);
+          }
+        }
+      });
+    }
+
+    async function answerAudioCall(offer) {
+      try {
+        audioPC = new RTCPeerConnection(configuration);
+        audioLocalStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        audioLocalStream.getTracks().forEach(track => audioPC.addTrack(track, audioLocalStream));
+        
+        audioPC.ontrack = ev => {
+          document.getElementById('remoteAudio').srcObject = ev.streams[0];
+          document.getElementById('audioCallStatus').textContent = 'Call connected';
+        };
+        
+        audioPC.onicecandidate = ev => {
+          if (ev.candidate) addDoc(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), ev.candidate.toJSON());
+        };
+        
+        audioPC.oniceconnectionstatechange = () => {
+          const state = audioPC.iceConnectionState;
+          if (state === 'connected') {
+            document.getElementById('audioCallStatus').textContent = 'Call connected';
+          } else if (state === 'disconnected' || state === 'failed') {
+            document.getElementById('audioCallStatus').textContent = 'Call ended';
+          }
+        };
+        
+        await audioPC.setRemoteDescription(offer);
+        const answer = await audioPC.createAnswer();
+        await audioPC.setLocalDescription(answer);
+        await setDoc(doc(db, 'chats', chatId, 'call', 'answer'), { answer });
+        document.getElementById('audioCallStatus').textContent = 'Call connected';
+        
+        onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added') audioPC.addIceCandidate(change.doc.data());
+          });
+        });
+      } catch (err) {
+        console.error('Error answering audio call:', err);
+        alert('Could not answer audio call: ' + err.message);
+        document.getElementById('audioCallStatus').textContent = 'Call failed';
+      }
+    }
   </script>
 </body>
 </html>

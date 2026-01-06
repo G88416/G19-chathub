@@ -9,10 +9,12 @@ service firebase.storage {
     }
     
     // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
+    // Also allows self-chat where both IDs are the same (userId_userId)
     function isParticipant(chatId) {
       return isSignedIn() && (
         chatId.matches('^' + request.auth.uid + '_[^_]+$') || 
-        chatId.matches('^[^_]+_' + request.auth.uid + '$')
+        chatId.matches('^[^_]+_' + request.auth.uid + '$') ||
+        chatId == request.auth.uid + '_' + request.auth.uid
       );
     }
     

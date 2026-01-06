@@ -55,16 +55,20 @@ The Firestore rules protect:
 2. **Chat Messages** (`/chats/{chatId}/messages/{messageId}`)
    - ✅ Only chat participants can read messages
    - ✅ Participants can send messages with their own senderId
-   - ✅ Messages are immutable (no updates/deletes)
+   - ✅ Messages are immutable (no updates/deletes) to preserve chat history
+   - ✅ Messages persist forever - chat history never disappears
+   - ✅ Self-chat support (user can chat with themselves)
    - ✅ Server timestamp validation
 
 3. **Typing Status** (`/chats/{chatId}/status/typing`)
    - ✅ Participants can read and update typing indicators
    - ✅ Users can only set their own typing status
 
-4. **Video Call Signaling** (`/chats/{chatId}/call/*`)
+4. **Voice/Video Call Signaling** (`/chats/{chatId}/call/*`)
    - ✅ Participants can create/read call offers and answers
    - ✅ Participants can exchange ICE candidates for WebRTC
+   - ✅ Support for both audio-only and video calls
+   - ✅ Call state management for tracking active calls
 
 ### Storage Rules
 
@@ -81,16 +85,19 @@ The Storage rules protect:
    - ✅ Max file size: 5MB
    - ✅ Must be audio type
    - ✅ Voice messages are immutable
+   - ✅ Self-chat support included
 
 ## Key Security Principles
 
 1. **Authentication Required**: All operations require users to be signed in
 2. **Authorization**: Users can only access their own chats (chatId contains their userId)
 3. **Data Validation**: Server timestamps and senderIds are validated
-4. **Immutability**: Messages and files cannot be edited or deleted
+4. **Immutability**: Messages and files cannot be edited or deleted - preserves chat history
 5. **Size Limits**: File uploads are limited to prevent abuse
 6. **Type Validation**: File types are restricted to safe formats
 7. **Auto-Start Support**: Rules allow participants to automatically start/join chats and read chat metadata for seamless user experience
+8. **Self-Chat Support**: Users can chat with themselves (useful for personal notes)
+9. **History Preservation**: Chat messages are never deleted and always remain accessible
 
 ## chatId Format
 
@@ -102,9 +109,12 @@ chatId = [userId1, userId2].sort().join('_')
 
 Example: If user `abc123` chats with user `xyz789`, the chatId will be `abc123_xyz789`
 
+**Self-Chat Support**: Users can also chat with themselves (useful for personal notes). In this case, the chatId will be `userId_userId` (e.g., `abc123_abc123`).
+
 This ensures:
 - Same chatId is used regardless of who initiates the chat
 - The `isParticipant()` helper verifies exact boundary matching with `[^_]+` (one or more non-underscore characters): the userId must be either at the start followed by `_` and another userId, or at the end preceded by `_` and another userId
+- Self-chat is explicitly supported when both IDs are identical
 - This prevents substring vulnerabilities, empty participant IDs, and malformed chatIds with multiple underscores (e.g., 'abc' won't match 'xabcy', 'user_' is invalid, 'user__other' is invalid)
 
 ## Testing Rules
