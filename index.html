@@ -1650,10 +1650,16 @@
           
           if (!snap.empty) {
             // Found user in database, use their exact registered email
+            // Note: emailLower should be unique per user, so we use the first match
             const userData = snap.docs[0]?.data();
-            if (userData && userData.email) {
-              email = userData.email;
+            if (!userData || !userData.email) {
+              authError.textContent = 'Account found but missing email address';
+              authError.style.display = 'block';
+              loginBtn.disabled = false;
+              loginBtn.textContent = 'Login';
+              return;
             }
+            email = userData.email;
           }
           // If not found in Firestore, proceed with the input as-is
           // This maintains backward compatibility for users who registered before emailLower was added
