@@ -1641,6 +1641,28 @@
             return;
           }
           email = userData.email;
+        } else {
+          // Lookup email in Firestore using case-insensitive emailLower field
+          // This ensures we use the exact email that was registered
+          const emailLower = emailOrUsername.toLowerCase();
+          const q = query(collection(db, 'users'), where('emailLower', '==', emailLower));
+          const snap = await getDocs(q);
+          
+          if (!snap.empty) {
+            // Found user in database, use their exact registered email
+            // Note: emailLower should be unique per user, so we use the first match
+            const userData = snap.docs[0]?.data();
+            if (!userData || !userData.email) {
+              authError.textContent = 'Account found but missing email address';
+              authError.style.display = 'block';
+              loginBtn.disabled = false;
+              loginBtn.textContent = 'Login';
+              return;
+            }
+            email = userData.email;
+          }
+          // If not found in Firestore, proceed with the input as-is
+          // This maintains backward compatibility for users who registered before emailLower was added
         }
 
         await signInWithEmailAndPassword(auth, email, password);
@@ -1654,6 +1676,8 @@
           errorMessage = 'Incorrect password. Please try again.';
         } else if (err.code === 'auth/invalid-email') {
           errorMessage = 'Invalid email address format.';
+        } else if (err.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid email or password. Please try again.';
         } else if (err.code === 'auth/too-many-requests') {
           errorMessage = 'Too many login attempts. Please try again later.';
         }
