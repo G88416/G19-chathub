@@ -733,21 +733,47 @@
   <!-- Profile Setup Modal (shown after signup) -->
   <div id="profileSetupModal" class="video-modal">
     <div class="video-modal-content" style="max-width: 500px;">
-      <h4 style="color: #e9edef; margin-bottom: 20px; text-align: center;">
+      <h4 style="color: #e9edef; margin-bottom: 10px; text-align: center;">
         <i class="bi bi-person-circle" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
         Set Up Your Profile
       </h4>
+      <p style="color: #8696a0; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">Help your friends recognize you</p>
       <div style="text-align: center; margin-bottom: 20px;">
-        <div id="profilePhotoPreview" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('profilePhotoInput').click()">
-          <i class="bi bi-camera" style="font-size: 2rem; color: #8696a0;"></i>
+        <div id="profilePhotoPreview" role="button" tabindex="0" aria-label="Upload profile photo" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
+          <i class="bi bi-camera-fill" style="font-size: 2rem; color: #8696a0;"></i>
         </div>
-        <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
-        <p style="color: #8696a0; font-size: 0.85rem;">Tap to add profile photo</p>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="handleProfilePhotoPreview(event)">
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 5px;">
+          <i class="bi bi-info-circle"></i> Click to add profile photo (optional)
+        </p>
       </div>
-      <input type="text" id="profileName" placeholder="Your name (required)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
-      <textarea id="profileAbout" placeholder="About / Status (optional)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;"></textarea>
-      <button class="auth-btn-primary" onclick="saveProfile()" style="width: 100%;">Save Profile</button>
-      <p id="profileSetupError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+      <div style="margin-bottom: 15px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+          Name <span style="color: #d9534f;">*</span>
+        </label>
+        <input type="text" id="profileName" placeholder="e.g., John Doe" maxlength="50" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;" oninput="validateProfileName(this)">
+        <small id="nameCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 3px;">0 / 50 characters</small>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+          About / Status (optional)
+        </label>
+        <textarea id="profileAbout" placeholder="e.g., Hey there! I am using ChatHub" maxlength="139" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;" oninput="updateAboutCharCount(this)"></textarea>
+        <small id="aboutCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 3px;">0 / 139 characters</small>
+      </div>
+      <p id="profileSetupError" style="color: #d9534f; text-align: center; margin-bottom: 10px; display: none; background: rgba(217, 83, 79, 0.1); padding: 10px; border-radius: 6px;"></p>
+      <button class="auth-btn-primary" id="saveProfileBtn" onclick="saveProfile()" style="width: 100%; margin-bottom: 10px;">
+        <span id="saveProfileBtnText">Save Profile</span>
+        <span id="saveProfileBtnSpinner" style="display: none;">
+          <i class="bi bi-hourglass-split"></i> Saving...
+        </span>
+      </button>
+      <button class="auth-btn-secondary" onclick="skipProfileSetup()" style="width: 100%;">
+        Skip for now
+      </button>
+      <p style="color: #8696a0; font-size: 0.75rem; text-align: center; margin-top: 10px; font-style: italic;">
+        <i class="bi bi-exclamation-circle"></i> You can update your profile later in Settings
+      </p>
     </div>
   </div>
 
@@ -1060,21 +1086,123 @@
       return `<img src="${src}" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
-    // Handle profile photo preview
-    document.addEventListener('DOMContentLoaded', () => {
-      const profilePhotoInput = document.getElementById('profilePhotoInput');
-      if (profilePhotoInput) {
-        profilePhotoInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              document.getElementById('profilePhotoPreview').innerHTML = createImagePreview(event.target.result);
-            };
-            reader.readAsDataURL(file);
+    // Profile photo preview handler
+    window.handleProfilePhotoPreview = function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        // Validate file size (5MB max)
+        const maxSize = MAX_PROFILE_PHOTO_SIZE_MB * 1024 * 1024;
+        if (file.size > maxSize) {
+          const errorEl = document.getElementById('profileSetupError');
+          errorEl.textContent = `Photo size must be less than ${MAX_PROFILE_PHOTO_SIZE_MB}MB`;
+          errorEl.style.display = 'block';
+          setTimeout(() => { errorEl.style.display = 'none'; }, ERROR_HIDE_TIMEOUT);
+          event.target.value = '';
+          return;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          const errorEl = document.getElementById('profileSetupError');
+          errorEl.textContent = 'Please select an image file';
+          errorEl.style.display = 'block';
+          setTimeout(() => { errorEl.style.display = 'none'; }, ERROR_HIDE_TIMEOUT);
+          event.target.value = '';
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('profilePhotoPreview').innerHTML = createImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    // Validate profile name with visual feedback
+    window.validateProfileName = function(input) {
+      const value = input.value.trim();
+      const charCount = document.getElementById('nameCharCount');
+      charCount.textContent = `${value.length} / 50 characters`;
+      
+      // Visual feedback
+      if (value.length === 0) {
+        input.style.borderColor = '#2a3942';
+        charCount.style.color = '#8696a0';
+      } else if (value.length < 2) {
+        input.style.borderColor = '#d9534f';
+        charCount.style.color = '#d9534f';
+      } else {
+        input.style.borderColor = '#00a884';
+        charCount.style.color = '#00a884';
+      }
+    };
+
+    // Update about character count
+    window.updateAboutCharCount = function(textarea) {
+      const charCount = document.getElementById('aboutCharCount');
+      charCount.textContent = `${textarea.value.length} / 139 characters`;
+      
+      if (textarea.value.length > 120) {
+        charCount.style.color = '#d9534f';
+      } else {
+        charCount.style.color = '#8696a0';
+      }
+    };
+
+    // Skip profile setup option
+    window.skipProfileSetup = async function() {
+      try {
+        // Create minimal profile with just email
+        const username = document.getElementById('username').value.trim().toLowerCase();
+        const email = currentUser.email;
+        
+        // Check if email exists
+        if (!email) {
+          const errorEl = document.getElementById('profileSetupError');
+          errorEl.textContent = 'Email is required to create profile';
+          errorEl.style.display = 'block';
+          return;
+        }
+        
+        const emailLower = email.toLowerCase().trim();
+        const defaultName = email.split('@')[0]; // Use email prefix as default name
+        
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          email: email,
+          emailLower: emailLower,
+          username: username.length > 0 ? username : null,
+          name: defaultName,
+          about: 'Hey there! I am using ChatHub',
+          photoURL: null,
+          online: true,
+          lastSeen: serverTimestamp(),
+          settings: {
+            notifications: true
           }
         });
+        
+        window.hideProfileSetup();
+        
+        // Transition from auth to chat interface
+        document.getElementById('auth').classList.add('d-none');
+        document.getElementById('chat').classList.remove('d-none');
+        
+        // Update user's profile avatar in the sidebar with first letter of email
+        document.getElementById('userProfileAvatar').textContent = defaultName.charAt(0).toUpperCase();
+        
+        // Start online status updates
+        startOnlineStatusUpdates();
+      } catch (err) {
+        const errorEl = document.getElementById('profileSetupError');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
       }
+    };
+
+    // Handle profile photo preview
+    document.addEventListener('DOMContentLoaded', () => {
+      // Photo input handler is already set via onchange attribute in HTML
 
       const settingsPhotoInput = document.getElementById('settingsPhotoInput');
       if (settingsPhotoInput) {
@@ -1189,8 +1317,10 @@
     const MESSAGE_LIMIT = 50; // Number of recent messages to load initially
     const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
     const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
+    const MAX_PROFILE_PHOTO_SIZE_MB = 5; // Maximum profile photo size in MB
     const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
     const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
+    const ERROR_HIDE_TIMEOUT = 3000; // Time to hide error messages (ms)
 
     let currentUser = null;
     let partnerId = null;
@@ -1397,14 +1527,34 @@
       const about = document.getElementById('profileAbout').value.trim() || 'Hey there! I am using ChatHub';
       const photoInput = document.getElementById('profilePhotoInput');
       const errorEl = document.getElementById('profileSetupError');
+      const saveBtn = document.getElementById('saveProfileBtn');
+      const btnText = document.getElementById('saveProfileBtnText');
+      const btnSpinner = document.getElementById('saveProfileBtnSpinner');
       
+      // Clear previous errors
+      errorEl.style.display = 'none';
+      
+      // Validate name
       if (!name) {
-        errorEl.textContent = 'Name is required';
+        errorEl.textContent = '⚠️ Name is required to continue';
         errorEl.style.display = 'block';
+        document.getElementById('profileName').focus();
+        document.getElementById('profileName').style.borderColor = '#d9534f';
+        return;
+      }
+      
+      if (name.length < 2) {
+        errorEl.textContent = '⚠️ Name must be at least 2 characters';
+        errorEl.style.display = 'block';
+        document.getElementById('profileName').focus();
+        document.getElementById('profileName').style.borderColor = '#d9534f';
         return;
       }
 
-      errorEl.style.display = 'none';
+      // Show loading state
+      saveBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline';
       
       try {
         let photoURL = null;
@@ -1412,6 +1562,13 @@
         // Upload profile photo if selected
         if (photoInput.files.length > 0) {
           const file = photoInput.files[0];
+          
+          // Validate file size
+          const maxSize = MAX_PROFILE_PHOTO_SIZE_MB * 1024 * 1024;
+          if (file.size > maxSize) {
+            throw new Error(`Photo size must be less than ${MAX_PROFILE_PHOTO_SIZE_MB}MB`);
+          }
+          
           const path = `profiles/${currentUser.uid}/${Date.now()}_${file.name}`;
           const sref = storageRef(storage, path);
           await uploadBytes(sref, file);
@@ -1452,8 +1609,13 @@
         // Start online status updates
         startOnlineStatusUpdates();
       } catch (err) {
-        errorEl.textContent = err.message;
+        errorEl.textContent = '❌ ' + err.message;
         errorEl.style.display = 'block';
+        
+        // Reset button state
+        saveBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
       }
     };
 
