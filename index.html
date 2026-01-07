@@ -819,7 +819,12 @@
     <!-- Sidebar - Chat List -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h5>ChatHub</h5>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="userProfileAvatar" style="width: 40px; height: 40px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; overflow: hidden; cursor: pointer;" onclick="toggleSettingsModal()" title="Your profile">
+            <i class="bi bi-person"></i>
+          </div>
+          <h5 style="margin: 0;">ChatHub</h5>
+        </div>
         <div style="display: flex; gap: 15px;">
           <button class="chat-input-btn" onclick="toggleCreateGroupModal()" title="Create Group">
             <i class="bi bi-people"></i>
@@ -1015,12 +1020,16 @@
     };
 
     // Update chat header with partner info
-    function updateChatHeader(partnerEmail) {
-      const avatar = partnerEmail.charAt(0).toUpperCase();
+    function updateChatHeader(partnerEmail, photoURL = null, name = null) {
+      const displayName = name || partnerEmail;
+      const avatar = photoURL 
+        ? `<img src="${photoURL}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+        : displayName.charAt(0).toUpperCase();
+      
       document.getElementById('chatAvatar').innerHTML = avatar;
       document.getElementById('currentChatAvatar').innerHTML = avatar;
-      document.getElementById('chatName').textContent = partnerEmail;
-      document.getElementById('currentChatName').textContent = partnerEmail;
+      document.getElementById('chatName').textContent = displayName;
+      document.getElementById('currentChatName').textContent = displayName;
       document.getElementById('onlineIndicator').style.display = 'inline';
       
       // On mobile, hide sidebar and show chat when chat starts
@@ -1381,6 +1390,13 @@
 
         await setDoc(doc(db, 'users', currentUser.uid), updateData, { merge: true });
         
+        // Update sidebar profile avatar
+        if (updateData.photoURL) {
+          document.getElementById('userProfileAvatar').innerHTML = `<img src="${updateData.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else if (name) {
+          document.getElementById('userProfileAvatar').textContent = name.charAt(0).toUpperCase();
+        }
+        
         successEl.textContent = 'Settings saved successfully!';
         successEl.style.display = 'block';
         
@@ -1561,6 +1577,14 @@
           return;
         }
         
+        // Load user's profile photo
+        const userData = userDoc.data();
+        if (userData.photoURL) {
+          document.getElementById('userProfileAvatar').innerHTML = `<img src="${userData.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else if (userData.name) {
+          document.getElementById('userProfileAvatar').textContent = userData.name.charAt(0).toUpperCase();
+        }
+        
         document.getElementById('auth').classList.add('d-none');
         document.getElementById('chat').classList.remove('d-none');
         const emailLower = user.email ? user.email.toLowerCase().trim() : null;
@@ -1645,7 +1669,11 @@
         }
 
         let newPartnerId = null;
-        snapshot.forEach(d => newPartnerId = d.id);
+        let partnerData = null;
+        snapshot.forEach(d => {
+          newPartnerId = d.id;
+          partnerData = d.data();
+        });
 
         // Check if already chatting with this partner
         if (partnerId === newPartnerId && messagesRef && chatId) {
@@ -1658,7 +1686,12 @@
         messagesRef = collection(db, 'chats', chatId, 'messages');
 
         document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        updateChatHeader(partnerInput);
+        
+        // Update chat header with partner's profile data
+        const displayName = partnerData?.name || partnerInput;
+        const photoURL = partnerData?.photoURL || null;
+        updateChatHeader(displayName, photoURL, displayName);
+        
         loadMessages();
         listenForCalls();
         listenForAudioCalls();
