@@ -1107,6 +1107,62 @@
   </script>
 
   <script type="module">
+    /* ===============================================================================
+     * FIREBASE SECURITY RULES DOCUMENTATION
+     * ===============================================================================
+     * 
+     * This application uses comprehensive Firestore and Storage security rules.
+     * The rules are defined in separate files and must be deployed to Firebase:
+     * 
+     * FILES:
+     * - firestore.rules: Database security rules for Firestore
+     * - storage.rules: Storage security rules for Cloud Storage
+     * - FIREBASE_RULES_README.md: Complete documentation and deployment guide
+     * 
+     * DEPLOYMENT:
+     * Rules must be deployed using Firebase Console or Firebase CLI:
+     * 
+     * Option 1 - Firebase Console:
+     *   1. Go to Firebase Console (https://console.firebase.google.com/)
+     *   2. Select project: g19-chathub
+     *   3. For Firestore: Database → Rules → Copy firestore.rules → Publish
+     *   4. For Storage: Storage → Rules → Copy storage.rules → Publish
+     * 
+     * Option 2 - Firebase CLI:
+     *   firebase deploy --only firestore:rules,storage:rules
+     * 
+     * KEY SECURITY FEATURES:
+     * 
+     * Firestore Rules:
+     * - ✅ Authentication required for all operations
+     * - ✅ Users can only access their own chats (chatId format: userId1_userId2)
+     * - ✅ Profile privacy: Users control their own profile data
+     * - ✅ Message immutability: Messages cannot be edited/deleted (preserves history)
+     * - ✅ Sender validation: Messages must have correct senderId
+     * - ✅ Group chat security: Only members can access group data
+     * - ✅ Self-chat support: Users can chat with themselves (userId_userId)
+     * - ✅ Call signaling protection: Only participants can exchange WebRTC signals
+     * 
+     * Storage Rules:
+     * - ✅ File size limits: 10MB for files, 5MB for voice/profile photos
+     * - ✅ Type validation: Only safe file types allowed
+     * - ✅ Access control: Only chat participants can access uploaded files
+     * - ✅ Profile photos: Users can only upload their own photos (5MB, images only)
+     * - ✅ Group photos: Only admins can manage group photos (5MB, images only)
+     * - ✅ File uploads: Images, videos, audio, documents (10MB max)
+     * - ✅ Voice messages: Audio only, 5MB max
+     * 
+     * IMPORTANT NOTES:
+     * - Rules must be deployed before the app will work correctly
+     * - Without proper rules, users may get "permission denied" errors
+     * - Always test rules in development before deploying to production
+     * - Review FIREBASE_RULES_README.md for complete documentation
+     * - Monitor Firebase Console for security alerts
+     * 
+     * For detailed information, see FIREBASE_RULES_README.md
+     * ===============================================================================
+     */
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
