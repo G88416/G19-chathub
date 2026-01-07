@@ -71,7 +71,7 @@ service firebase.storage {
     
     // Check if user is a group admin by querying Firestore
     function isGroupAdmin(groupId) {
-      return firestore.get(/databases/(default)/documents/groups/$(groupId)).data.admins.hasAny([request.auth.uid]);
+      return request.auth.uid in firestore.get(/databases/(default)/documents/groups/$(groupId)).data.admins;
     }
     
     // ========== PROFILE PHOTOS ==========
