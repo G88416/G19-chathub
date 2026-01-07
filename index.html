@@ -1301,6 +1301,8 @@
           if (!snap.empty) {
             authError.textContent = 'Username already taken';
             authError.style.display = 'block';
+            signupBtn.disabled = false;
+            signupBtn.textContent = 'Sign Up';
             return;
           }
         }
@@ -1569,6 +1571,8 @@
           if (snap.empty) {
             authError.textContent = 'Username not found';
             authError.style.display = 'block';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
             return;
           }
           
@@ -1576,6 +1580,8 @@
           if (!userData || !userData.email) {
             authError.textContent = 'Account not found or missing email address';
             authError.style.display = 'block';
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
             return;
           }
           email = userData.email;
