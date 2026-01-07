@@ -1207,6 +1207,21 @@
     let isTyping = false;
     let audioContext = null;
     let recordingMimeType = 'audio/webm'; // Track MIME type used for recording
+    let onlineStatusTimer = null; // Track online status update timer
+
+    // Helper function to start online status updates
+    function startOnlineStatusUpdates() {
+      // Clear any existing timer to prevent duplicates
+      if (onlineStatusTimer) {
+        clearInterval(onlineStatusTimer);
+      }
+      // Update online status periodically
+      onlineStatusTimer = setInterval(() => {
+        if (currentUser) {
+          setDoc(doc(db, 'users', currentUser.uid), { online: true, lastSeen: serverTimestamp() }, { merge: true });
+        }
+      }, 60000); // Update every minute
+    }
 
     // Emoji picker data
     const emojis = [
@@ -1422,6 +1437,20 @@
         });
         
         window.hideProfileSetup();
+        
+        // Transition from auth to chat interface
+        document.getElementById('auth').classList.add('d-none');
+        document.getElementById('chat').classList.remove('d-none');
+        
+        // Update user's profile avatar in the sidebar
+        if (photoURL) {
+          document.getElementById('userProfileAvatar').innerHTML = createImagePreview(photoURL);
+        } else if (name) {
+          document.getElementById('userProfileAvatar').textContent = name.charAt(0).toUpperCase();
+        }
+        
+        // Start online status updates
+        startOnlineStatusUpdates();
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
@@ -1769,6 +1798,8 @@
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (!userDoc.exists() || !userDoc.data()?.name) {
           // Show profile setup modal for new users or users without name
+          // Hide auth container so user doesn't see login form behind modal
+          document.getElementById('auth').classList.add('d-none');
           window.showProfileSetup();
           return;
         }
@@ -1791,14 +1822,15 @@
           online: true,
           lastSeen: serverTimestamp()
         }, { merge: true });
-        // Update online status periodically
-        setInterval(() => {
-          if (currentUser) {
-            setDoc(doc(db, 'users', currentUser.uid), { online: true, lastSeen: serverTimestamp() }, { merge: true });
-          }
-        }, 60000); // Update every minute
+        // Start online status updates
+        startOnlineStatusUpdates();
       } else {
         currentUser = null;
+        // Clear online status timer on logout
+        if (onlineStatusTimer) {
+          clearInterval(onlineStatusTimer);
+          onlineStatusTimer = null;
+        }
         document.getElementById('auth').classList.remove('d-none');
         document.getElementById('chat').classList.add('d-none');
         window.hideProfileSetup();
