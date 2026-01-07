@@ -3,13 +3,16 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper function to check if user is authenticated
+    // ========== HELPER FUNCTIONS ==========
+    
+    // Check if user is authenticated (required for all operations)
     function isSignedIn() {
       return request.auth != null;
     }
     
-    // Helper function to check if user is part of a chat (chatId format: userId1_userId2)
+    // Check if user is part of a chat (chatId format: userId1_userId2)
     // Also allows self-chat where both IDs are the same (userId_userId)
+    // Uses regex to ensure exact boundary matching
     function isParticipant(chatId) {
       return isSignedIn() && (
         chatId.matches('^' + request.auth.uid + '_[^_]+$') || 
@@ -18,12 +21,15 @@ service firebase.storage {
       );
     }
     
-    // Helper function to validate file size (max 10MB for files, 5MB for voice)
+    // Validate file size (prevents abuse and ensures storage limits)
+    // maxSizeMB: maximum file size in megabytes
     function isValidFileSize(maxSizeMB) {
       return request.resource.size < maxSizeMB * 1024 * 1024;
     }
     
-    // Helper function to validate file types for general files
+    // Validate file types for general chat file uploads
+    // Allowed: images, videos, audio, documents, text files
+    // This prevents malicious file uploads while supporting common file types
     function isValidFileType() {
       return request.resource.contentType == 'image/jpeg'
         || request.resource.contentType == 'image/png'
@@ -47,7 +53,7 @@ service firebase.storage {
         || request.resource.contentType == 'text/csv';
     }
     
-    // Helper function to validate voice message types
+    // Validate voice message types (audio only)
     function isValidVoiceType() {
       return request.resource.contentType == 'audio/webm'
         || request.resource.contentType == 'audio/mpeg'
@@ -55,7 +61,7 @@ service firebase.storage {
         || request.resource.contentType == 'audio/ogg';
     }
     
-    // Helper function to validate image types (for profile/group photos)
+    // Validate image types (for profile and group photos)
     function isValidImageType() {
       return request.resource.contentType == 'image/jpeg'
         || request.resource.contentType == 'image/png'
@@ -63,67 +69,116 @@ service firebase.storage {
         || request.resource.contentType == 'image/webp';
     }
     
-    // Helper function to check if user is a group admin
+    // Check if user is a group admin by querying Firestore
     function isGroupAdmin(groupId) {
       return firestore.get(/databases/(default)/documents/groups/$(groupId)).data.admins.hasAny([request.auth.uid]);
     }
     
-    // Profile photos
+    // ========== PROFILE PHOTOS ==========
+    // Storage path: /profiles/{userId}/{fileName}
+    // Used for user profile pictures in authentication and settings
+    
     match /profiles/{userId}/{fileName} {
-      // Anyone authenticated can read profile photos
+      // READ: Anyone authenticated can read profile photos
+      // This allows:
+      // - Displaying profile pictures in chat list
+      // - Showing avatars in message threads
+      // - Viewing user profiles before starting chats
       allow read: if isSignedIn();
       
-      // Users can only upload their own profile photo
-      // Max size: 5MB, must be image type
+      // CREATE/UPDATE: Users can only upload their own profile photo
+      // Requirements:
+      // - User must be authenticated
+      // - userId in path must match authenticated user
+      // - File size must be under 5MB (prevents storage abuse)
+      // - File must be an image type (jpeg, png, gif, webp)
+      // This enables profile photo upload in signup and settings
       allow create, update: if isSignedIn()
         && request.auth.uid == userId
         && isValidFileSize(5)
         && isValidImageType();
       
-      // Users can delete their own profile photo
+      // DELETE: Users can delete their own profile photo
+      // Allows removing profile picture in settings
       allow delete: if isSignedIn() && request.auth.uid == userId;
     }
     
-    // Group photos
+    // ========== GROUP PHOTOS ==========
+    // Storage path: /groups/{groupId}/{fileName}
+    // Used for group chat pictures and avatars
+    
     match /groups/{groupId}/{fileName} {
-      // Anyone authenticated can read group photos
+      // READ: Anyone authenticated can read group photos
+      // This allows:
+      // - Displaying group pictures in chat list
+      // - Showing group avatars in group info
+      // - Viewing group images before joining
       allow read: if isSignedIn();
       
-      // Only group admins can upload/update group photos
-      // Max size: 5MB, must be image type
+      // CREATE/UPDATE: Only group admins can upload/update group photos
+      // Requirements:
+      // - User must be a group admin (verified via Firestore query)
+      // - File size must be under 5MB
+      // - File must be an image type
+      // This ensures only admins can manage group appearance
       allow create, update: if isSignedIn()
         && isGroupAdmin(groupId)
         && isValidFileSize(5)
         && isValidImageType();
       
-      // Only group admins can delete group photos
+      // DELETE: Only group admins can delete group photos
       allow delete: if isSignedIn() && isGroupAdmin(groupId);
     }
     
-    // Files uploaded through chat (images, videos, documents)
+    // ========== CHAT FILES ==========
+    // Storage path: /files/{chatId}/{fileName}
+    // Used for images, videos, documents shared in chats
+    
     match /files/{chatId}/{fileName} {
-      // Participants can read files from their chats
+      // READ: Only chat participants can read files
+      // This ensures:
+      // - File privacy between chat participants
+      // - Unauthorized users cannot access shared files
+      // - Self-chat file access for personal file storage
       allow read: if isParticipant(chatId);
       
-      // Participants can upload files to their chats
-      // Max file size: 10MB
-      // Must be a valid file type
+      // CREATE: Only chat participants can upload files
+      // Requirements:
+      // - User must be a participant in the chat
+      // - File size must be under 10MB (reasonable limit for chat files)
+      // - File must be a valid type (images, videos, documents, etc.)
+      // This enables file sharing in chat conversations
+      // Supports: Images, videos, audio, PDFs, Office docs, text files
       allow create: if isParticipant(chatId)
         && isValidFileSize(10)
         && isValidFileType();
+      
+      // UPDATE/DELETE: Not allowed to preserve file history integrity
+      // Once uploaded, files cannot be modified or removed
+      // This ensures shared files remain accessible in chat history
     }
     
-    // Voice messages
+    // ========== VOICE MESSAGES ==========
+    // Storage path: /voice/{chatId}/{fileName}
+    // Used for audio recordings sent in chats
+    
     match /voice/{chatId}/{fileName} {
-      // Participants can read voice messages from their chats
+      // READ: Only chat participants can read voice messages
+      // Ensures voice message privacy between participants
       allow read: if isParticipant(chatId);
       
-      // Participants can upload voice messages to their chats
-      // Max file size: 5MB for voice messages
-      // Must be audio type
+      // CREATE: Only chat participants can upload voice messages
+      // Requirements:
+      // - User must be a participant in the chat
+      // - File size must be under 5MB (typical for voice recordings)
+      // - File must be an audio type (webm, mp3, wav, ogg)
+      // This enables voice message recording and sending
       allow create: if isParticipant(chatId)
         && isValidFileSize(5)
         && isValidVoiceType();
+      
+      // UPDATE/DELETE: Not allowed to preserve voice message history
+      // Voice messages are immutable once sent
     }
   }
 }
