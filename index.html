@@ -739,7 +739,7 @@
       </h4>
       <p style="color: #8696a0; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">Help your friends recognize you</p>
       <div style="text-align: center; margin-bottom: 20px;">
-        <div id="profilePhotoPreview" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
+        <div id="profilePhotoPreview" role="button" tabindex="0" aria-label="Upload profile photo" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
           <i class="bi bi-camera-fill" style="font-size: 2rem; color: #8696a0;"></i>
         </div>
         <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="handleProfilePhotoPreview(event)">
@@ -1091,11 +1091,12 @@
       const file = event.target.files[0];
       if (file) {
         // Validate file size (5MB max)
-        if (file.size > 5 * 1024 * 1024) {
+        const maxSize = MAX_PROFILE_PHOTO_SIZE_MB * 1024 * 1024;
+        if (file.size > maxSize) {
           const errorEl = document.getElementById('profileSetupError');
-          errorEl.textContent = 'Photo size must be less than 5MB';
+          errorEl.textContent = `Photo size must be less than ${MAX_PROFILE_PHOTO_SIZE_MB}MB`;
           errorEl.style.display = 'block';
-          setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
+          setTimeout(() => { errorEl.style.display = 'none'; }, ERROR_HIDE_TIMEOUT);
           event.target.value = '';
           return;
         }
@@ -1105,7 +1106,7 @@
           const errorEl = document.getElementById('profileSetupError');
           errorEl.textContent = 'Please select an image file';
           errorEl.style.display = 'block';
-          setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
+          setTimeout(() => { errorEl.style.display = 'none'; }, ERROR_HIDE_TIMEOUT);
           event.target.value = '';
           return;
         }
@@ -1155,13 +1156,23 @@
         // Create minimal profile with just email
         const username = document.getElementById('username').value.trim().toLowerCase();
         const email = currentUser.email;
-        const emailLower = email ? email.toLowerCase().trim() : null;
+        
+        // Check if email exists
+        if (!email) {
+          const errorEl = document.getElementById('profileSetupError');
+          errorEl.textContent = 'Email is required to create profile';
+          errorEl.style.display = 'block';
+          return;
+        }
+        
+        const emailLower = email.toLowerCase().trim();
+        const defaultName = email.split('@')[0]; // Use email prefix as default name
         
         await setDoc(doc(db, 'users', currentUser.uid), {
           email: email,
           emailLower: emailLower,
           username: username.length > 0 ? username : null,
-          name: email.split('@')[0], // Use email prefix as default name
+          name: defaultName,
           about: 'Hey there! I am using ChatHub',
           photoURL: null,
           online: true,
@@ -1178,7 +1189,6 @@
         document.getElementById('chat').classList.remove('d-none');
         
         // Update user's profile avatar in the sidebar with first letter of email
-        const defaultName = email.split('@')[0];
         document.getElementById('userProfileAvatar').textContent = defaultName.charAt(0).toUpperCase();
         
         // Start online status updates
@@ -1192,12 +1202,7 @@
 
     // Handle profile photo preview
     document.addEventListener('DOMContentLoaded', () => {
-      const profilePhotoInput = document.getElementById('profilePhotoInput');
-      if (profilePhotoInput) {
-        profilePhotoInput.addEventListener('change', (e) => {
-          handleProfilePhotoPreview(e);
-        });
-      }
+      // Photo input handler is already set via onchange attribute in HTML
 
       const settingsPhotoInput = document.getElementById('settingsPhotoInput');
       if (settingsPhotoInput) {
@@ -1312,8 +1317,10 @@
     const MESSAGE_LIMIT = 50; // Number of recent messages to load initially
     const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
     const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
+    const MAX_PROFILE_PHOTO_SIZE_MB = 5; // Maximum profile photo size in MB
     const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
     const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
+    const ERROR_HIDE_TIMEOUT = 3000; // Time to hide error messages (ms)
 
     let currentUser = null;
     let partnerId = null;
@@ -1556,9 +1563,10 @@
         if (photoInput.files.length > 0) {
           const file = photoInput.files[0];
           
-          // Validate file size (5MB max)
-          if (file.size > 5 * 1024 * 1024) {
-            throw new Error('Photo size must be less than 5MB');
+          // Validate file size
+          const maxSize = MAX_PROFILE_PHOTO_SIZE_MB * 1024 * 1024;
+          if (file.size > maxSize) {
+            throw new Error(`Photo size must be less than ${MAX_PROFILE_PHOTO_SIZE_MB}MB`);
           }
           
           const path = `profiles/${currentUser.uid}/${Date.now()}_${file.name}`;
