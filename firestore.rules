@@ -23,16 +23,66 @@ service cloud.firestore {
       );
     }
     
-    // Users collection - stores user profiles
+    // Helper function to check if user is a member of a group
+    function isGroupMember(groupId) {
+      return isSignedIn() && 
+        request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+    
+    // Helper function to check if user is a group admin
+    function isGroupAdmin(groupId) {
+      return isSignedIn() && 
+        request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.admins;
+    }
+    
+    // Users collection - stores user profiles with WhatsApp-like fields
     match /users/{userId} {
       // Anyone can read user profiles (needed to search for users to chat with)
       allow read: if isSignedIn();
       
       // Only the user can create their own profile
-      allow create: if isOwner(userId);
+      // Required field: name
+      allow create: if isOwner(userId) 
+        && request.resource.data.keys().hasAll(['name']);
       
       // Only the user can update their own profile
+      // Can update: name, about, photoURL, online, lastSeen, settings
       allow update: if isOwner(userId);
+    }
+    
+    // Groups collection - stores group chat data
+    match /groups/{groupId} {
+      // Anyone authenticated can read group metadata (for discovery)
+      allow read: if isSignedIn();
+      
+      // Any authenticated user can create a group
+      // Creator must be in members and admins lists
+      allow create: if isSignedIn() 
+        && request.auth.uid in request.resource.data.members
+        && request.auth.uid in request.resource.data.admins;
+      
+      // Only group admins can update group metadata
+      allow update: if isGroupAdmin(groupId);
+      
+      // Only group admins can delete groups
+      allow delete: if isGroupAdmin(groupId);
+      
+      // Group messages subcollection
+      match /messages/{messageId} {
+        // Only group members can read messages
+        allow read: if isGroupMember(groupId);
+        
+        // Only group members can send messages
+        allow create: if isGroupMember(groupId)
+          && request.resource.data.senderId == request.auth.uid;
+      }
+      
+      // Group typing status
+      match /status/typing {
+        allow read: if isGroupMember(groupId);
+        allow write: if isGroupMember(groupId)
+          && request.resource.data.userId == request.auth.uid;
+      }
     }
     
     // Chats collection - stores all chat data

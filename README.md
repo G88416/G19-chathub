@@ -14,6 +14,30 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
   - Sent messages: Dark green (#005c4b)
   - Received messages: Dark gray (#202c33)
 - **Modern Design**: Rounded avatars, smooth animations, responsive layout
+- **Profile Photos**: Display user profile pictures in chat headers and sidebar
+
+### 👤 WhatsApp-Like Profile Setup
+- **Profile Setup on First Login**: New users must set up their profile before accessing the app
+  - **Name**: Required field (displayed to other users)
+  - **Profile Photo**: Optional profile picture upload
+  - **About/Status**: Optional status message (e.g., "Hey there! I am using ChatHub")
+- **Profile Management**: Update your profile anytime through Settings
+
+### ⚙️ Settings
+- **User Settings**: WhatsApp-style settings panel to:
+  - Update your name
+  - Change profile photo
+  - Edit your about/status
+  - Toggle notification preferences
+- **Profile Preview**: See your profile photo in the sidebar header
+
+### 👥 Group Chats
+- **Create Groups**: Form group conversations with multiple users
+  - Set group name and description
+  - Upload group photo
+  - Add members by email, username, or phone
+- **Group Management**: Admins can manage group settings
+- **Group Security**: Firestore rules ensure only members can access group messages
 
 ### 💬 Chat Features
 - **Real-time Messaging**: Instant text message delivery
@@ -42,16 +66,22 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
 ## How to Use
 
 1. **Sign Up**: Create an account with email and password
-2. **Login**: Use your credentials to access the app
-3. **Start Chatting**: 
+2. **Set Up Profile**: 
+   - Enter your name (required)
+   - Upload a profile photo (optional)
+   - Add an about/status message (optional)
+3. **Login**: Use your credentials to access the app
+4. **Start Chatting**: 
    - Enter your friend's email, username, or phone in the search box
    - Press Enter or click outside to start the chat
    - Begin messaging!
-4. **Send Media**: Click the attachment icon to send files
-5. **Voice Messages**: Click the microphone to record voice notes
-6. **Voice Call**: Click the phone icon to start an audio call
-7. **Video Call**: Click the video camera icon to start a video call
-8. **Emojis**: Click the smile icon to open the emoji picker
+5. **Create Groups**: Click the group icon to create a group chat
+6. **Update Settings**: Click your profile photo or the settings icon to manage your profile
+7. **Send Media**: Click the attachment icon to send files
+8. **Voice Messages**: Click the microphone to record voice notes
+9. **Voice Call**: Click the phone icon to start an audio call
+10. **Video Call**: Click the video camera icon to start a video call
+11. **Emojis**: Click the smile icon to open the emoji picker
 
 ## Technical Details
 
@@ -68,9 +98,13 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
 - Safari
 - Opera
 
-### Features Preserved from Original
-All original functionality has been maintained:
+### Features Summary
+All functionality has been implemented:
 - ✅ Authentication (email, username, phone)
+- ✅ WhatsApp-style profile setup (name, photo, about)
+- ✅ User settings page
+- ✅ Profile photo display in UI
+- ✅ Group chat creation and management
 - ✅ Real-time messaging
 - ✅ File uploads and sharing
 - ✅ Voice recording
@@ -83,6 +117,8 @@ All original functionality has been maintained:
 - ✅ Self-chat support
 - ✅ Connection status monitoring
 - ✅ Performance optimizations
+- ✅ Enhanced Firestore security rules
+- ✅ Enhanced Storage security rules
 
 ## Development
 
@@ -94,22 +130,36 @@ python3 -m http.server 8080
 # Then open http://localhost:8080
 ```
 
+## Security Features
+
+### Enhanced Firestore Rules
+The app includes comprehensive security rules that:
+- ✅ Require authentication for all operations
+- ✅ Validate user profile fields (name and about are required on creation)
+- ✅ Support group chat permissions (members-only access)
+- ✅ Protect user profiles (users can only edit their own)
+- ✅ Validate message sender IDs
+- ✅ Ensure chat participants can only access their own chats
+- ✅ Support call signaling security
+
+### Enhanced Storage Rules
+Storage rules provide:
+- ✅ Profile photo upload security (5MB limit, image types only)
+- ✅ Group photo upload security (admins only, 5MB limit)
+- ✅ File upload validation (10MB limit, safe file types)
+- ✅ Voice message validation (5MB limit, audio types only)
+- ✅ Participant-based access control
+
 ## UI Transformation
 
-The app has been completely redesigned from a Bootstrap card-based layout to a WhatsApp-inspired interface:
-
-### Before
-- Single card layout
-- Light theme with purple gradients
-- Side-by-side video and chat
-- Traditional form inputs
-
-### After
+The app features a WhatsApp-inspired interface:
 - Two-panel WhatsApp layout
-- Dark theme with green accents
+- Dark theme with green accents (#00a884)
 - Sidebar for chat list
 - Modern message bubbles
 - Modal video calls
+- Profile photos in headers and sidebar
+- Settings and group creation modals
 - Clean, professional interface
 
 ## License

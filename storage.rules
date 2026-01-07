@@ -55,6 +55,51 @@ service firebase.storage {
         || request.resource.contentType == 'audio/ogg';
     }
     
+    // Helper function to validate image types (for profile/group photos)
+    function isValidImageType() {
+      return request.resource.contentType == 'image/jpeg'
+        || request.resource.contentType == 'image/png'
+        || request.resource.contentType == 'image/gif'
+        || request.resource.contentType == 'image/webp';
+    }
+    
+    // Helper function to check if user is a group admin
+    function isGroupAdmin(groupId) {
+      return firestore.get(/databases/(default)/documents/groups/$(groupId)).data.admins.hasAny([request.auth.uid]);
+    }
+    
+    // Profile photos
+    match /profiles/{userId}/{fileName} {
+      // Anyone authenticated can read profile photos
+      allow read: if isSignedIn();
+      
+      // Users can only upload their own profile photo
+      // Max size: 5MB, must be image type
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidFileSize(5)
+        && isValidImageType();
+      
+      // Users can delete their own profile photo
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Group photos
+    match /groups/{groupId}/{fileName} {
+      // Anyone authenticated can read group photos
+      allow read: if isSignedIn();
+      
+      // Only group admins can upload/update group photos
+      // Max size: 5MB, must be image type
+      allow create, update: if isSignedIn()
+        && isGroupAdmin(groupId)
+        && isValidFileSize(5)
+        && isValidImageType();
+      
+      // Only group admins can delete group photos
+      allow delete: if isSignedIn() && isGroupAdmin(groupId);
+    }
+    
     // Files uploaded through chat (images, videos, documents)
     match /files/{chatId}/{fileName} {
       // Participants can read files from their chats
