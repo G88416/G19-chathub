@@ -713,17 +713,19 @@
       <div class="auth-card-body">
         <h3>Welcome to ChatHub</h3>
         <input type="text" id="username" placeholder="Username (optional)" aria-label="Username (optional)">
-        <input type="email" id="email" placeholder="Email address">
-        <input type="password" id="password" placeholder="Password">
-        <input type="tel" id="phone" placeholder="+1234567890">
+        <input type="email" id="email" placeholder="Email address" onkeypress="if(event.key==='Enter') login()">
+        <input type="password" id="password" placeholder="Password" onkeypress="if(event.key==='Enter') login()">
+        <input type="tel" id="phone" placeholder="+1234567890" onkeypress="if(event.key==='Enter') loginWithPhone()">
         <div class="auth-checkbox">
           <input type="checkbox" id="useUsername">
           <label for="useUsername">Login with username instead of email</label>
         </div>
         <div id="recaptcha-container"></div>
-        <button class="auth-btn-primary" onclick="signup()">Sign Up</button>
-        <button class="auth-btn-secondary" onclick="login()">Login</button>
-        <button class="auth-btn-secondary" onclick="loginWithPhone()">Login with Phone</button>
+        <button class="auth-btn-primary" id="signupBtn" onclick="signup()">Sign Up</button>
+        <button class="auth-btn-secondary" id="loginBtn" onclick="login()">Login</button>
+        <button class="auth-btn-secondary" id="phoneLoginBtn" onclick="loginWithPhone()">Login with Phone</button>
+        <p id="authError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+        <p id="authSuccess" style="color: #00a884; text-align: center; margin-top: 10px; display: none;"></p>
       </div>
     </div>
   </div>
@@ -835,10 +837,15 @@
           <button class="chat-input-btn" onclick="logout()" title="Logout">
             <i class="bi bi-box-arrow-right"></i>
           </button>
-        </div>
       </div>
       <div class="sidebar-search">
-        <input type="text" id="partnerEmail" placeholder="Enter email, username or phone to start chat..." onkeypress="if(event.key==='Enter') startChat()" onblur="if(this.value.trim()) startChatOnBlur()">
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <input type="text" id="partnerEmail" placeholder="🔍 Search or start new chat..." onkeypress="if(event.key==='Enter') startChat()" style="flex: 1;">
+          <button onclick="startChat()" class="chat-input-btn send" title="Start chat" style="flex-shrink: 0;">
+            <i class="bi bi-arrow-right-circle"></i>
+          </button>
+        </div>
+        <p id="searchStatus" style="color: #8696a0; font-size: 0.75rem; margin: 5px 10px 0; display: none;"></p>
       </div>
       <div class="chat-list" id="chatList">
         <!-- Recent chats will appear here -->
@@ -848,8 +855,11 @@
           </div>
           <div class="chat-item-content">
             <div class="chat-item-name" id="currentChatName">Start a chat</div>
-            <div class="chat-item-message">Enter partner's email above</div>
+            <div class="chat-item-message">Enter email/username above and press Enter ↵</div>
           </div>
+        </div>
+        <div style="padding: 15px; text-align: center; border-top: 1px solid #2a3942; margin-top: 10px;">
+          <p style="color: #8696a0; font-size: 0.8rem; margin: 0;">💡 <strong>Tip:</strong> Enter your friend's email, username, or phone number above to start chatting!</p>
         </div>
       </div>
     </div>
@@ -1006,17 +1016,6 @@
       const chatMain = document.querySelector('.chat-main');
       sidebar.classList.toggle('show-mobile');
       chatMain.classList.toggle('hide-mobile');
-    };
-
-    // Auto-start chat functionality
-    window.startChatOnBlur = function() {
-      const input = document.getElementById('partnerEmail');
-      if (input && input.value.trim()) {
-        // Add a small delay to allow other events to complete
-        setTimeout(() => {
-          window.startChat(true); // Pass true to indicate auto-start
-        }, 200);
-      }
     };
 
     // Update chat header with partner info
@@ -1256,29 +1255,13 @@
       initEmojiPicker();
       monitorConnection();
       
-      // Add auto-start chat on input with debouncing
+      // Clear search status when typing
       const partnerInput = document.getElementById('partnerEmail');
       if (partnerInput) {
-        let autoStartDebounce = null;
         partnerInput.addEventListener('input', (e) => {
-          // Clear existing timeout
-          if (autoStartDebounce) {
-            clearTimeout(autoStartDebounce);
-          }
-          
-          const value = e.target.value.trim();
-          if (value.length > 0) {
-            // Wait 1.5 seconds after user stops typing before auto-starting
-            autoStartDebounce = setTimeout(() => {
-              // Check again at execution time in case input was cleared
-              const currentValue = partnerInput.value.trim();
-              if (currentValue.length > 0) {
-                window.startChat(true); // Pass true to indicate auto-start
-              }
-            }, 1500);
-          } else {
-            // Clear timeout if input becomes empty
-            clearTimeout(autoStartDebounce);
+          const searchStatus = document.getElementById('searchStatus');
+          if (searchStatus) {
+            searchStatus.style.display = 'none';
           }
         });
       }
@@ -1288,21 +1271,51 @@
       const username = document.getElementById('username').value.trim().toLowerCase();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      if (!email || !password) return alert('Please fill in all required fields');
+      const signupBtn = document.getElementById('signupBtn');
+      const authError = document.getElementById('authError');
+      const authSuccess = document.getElementById('authSuccess');
+      
+      authError.style.display = 'none';
+      authSuccess.style.display = 'none';
+      
+      if (!email || !password) {
+        authError.textContent = 'Please fill in email and password';
+        authError.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        authError.textContent = 'Password must be at least 6 characters';
+        authError.style.display = 'block';
+        return;
+      }
 
       try {
+        signupBtn.disabled = true;
+        signupBtn.textContent = 'Signing up...';
+        
         // Check if username is unique (if provided)
         if (username.length > 0) {
           const q = query(collection(db, 'users'), where('username', '==', username));
           const snap = await getDocs(q);
-          if (!snap.empty) return alert('Username already taken');
+          if (!snap.empty) {
+            authError.textContent = 'Username already taken';
+            authError.style.display = 'block';
+            return;
+          }
         }
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+        authSuccess.textContent = 'Account created! Please set up your profile.';
+        authSuccess.style.display = 'block';
         // Show profile setup modal instead of immediately creating profile
-        window.showProfileSetup();
+        setTimeout(() => window.showProfileSetup(), 500);
       } catch (err) {
-        alert(err.message);
+        authError.textContent = err.message;
+        authError.style.display = 'block';
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
       }
     };
 
@@ -1530,26 +1543,63 @@
       let emailOrUsername = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const useUsername = document.getElementById('useUsername').checked;
+      const loginBtn = document.getElementById('loginBtn');
+      const authError = document.getElementById('authError');
+      const authSuccess = document.getElementById('authSuccess');
 
-      if (!emailOrUsername || !password) return alert('Please enter email/username and password');
+      authError.style.display = 'none';
+      authSuccess.style.display = 'none';
+
+      if (!emailOrUsername || !password) {
+        authError.textContent = 'Please enter email/username and password';
+        authError.style.display = 'block';
+        return;
+      }
 
       try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+        
         let email = emailOrUsername;
 
         if (useUsername) {
           // Lookup email by username (case-insensitive)
           const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
           const snap = await getDocs(q);
-          if (snap.empty) return alert('Username not found');
+          if (snap.empty) {
+            authError.textContent = 'Username not found';
+            authError.style.display = 'block';
+            return;
+          }
           
           const userData = snap.docs[0]?.data();
-          if (!userData || !userData.email) return alert('Account not found or missing email address');
+          if (!userData || !userData.email) {
+            authError.textContent = 'Account not found or missing email address';
+            authError.style.display = 'block';
+            return;
+          }
           email = userData.email;
         }
 
         await signInWithEmailAndPassword(auth, email, password);
+        authSuccess.textContent = 'Login successful! Loading chat...';
+        authSuccess.style.display = 'block';
       } catch (err) {
-        alert(err.message);
+        let errorMessage = err.message;
+        if (err.code === 'auth/user-not-found') {
+          errorMessage = 'No account found with this email. Please sign up first.';
+        } else if (err.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (err.code === 'auth/invalid-email') {
+          errorMessage = 'Invalid email address format.';
+        } else if (err.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many login attempts. Please try again later.';
+        }
+        authError.textContent = errorMessage;
+        authError.style.display = 'block';
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
       }
     };
 
@@ -1557,21 +1607,72 @@
 
     window.loginWithPhone = () => {
       const phone = document.getElementById('phone').value.trim();
-      if (!phone) return alert('Enter phone number');
+      const phoneLoginBtn = document.getElementById('phoneLoginBtn');
+      const authError = document.getElementById('authError');
+      const authSuccess = document.getElementById('authSuccess');
+      
+      authError.style.display = 'none';
+      authSuccess.style.display = 'none';
+      
+      if (!phone) {
+        authError.textContent = 'Please enter phone number (e.g., +1234567890)';
+        authError.style.display = 'block';
+        return;
+      }
+
+      phoneLoginBtn.disabled = true;
+      phoneLoginBtn.textContent = 'Sending SMS...';
 
       // Clean up existing verifier if present
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
       }
       
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-      signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
-        .then(confirmationResult => {
-          const code = prompt('Enter SMS code');
-          if (!code) return; // User cancelled
-          return confirmationResult.confirm(code);
-        })
-        .catch(err => alert(err.message));
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+          .then(confirmationResult => {
+            phoneLoginBtn.disabled = false;
+            phoneLoginBtn.textContent = 'Login with Phone';
+            authSuccess.textContent = 'SMS code sent! Check your phone.';
+            authSuccess.style.display = 'block';
+            
+            const code = prompt('Enter the 6-digit SMS code:');
+            if (!code) {
+              authError.textContent = 'Login cancelled';
+              authError.style.display = 'block';
+              return;
+            }
+            
+            phoneLoginBtn.disabled = true;
+            phoneLoginBtn.textContent = 'Verifying...';
+            
+            return confirmationResult.confirm(code);
+          })
+          .then(() => {
+            authSuccess.textContent = 'Phone login successful!';
+            authSuccess.style.display = 'block';
+          })
+          .catch(err => {
+            let errorMessage = err.message;
+            if (err.code === 'auth/invalid-phone-number') {
+              errorMessage = 'Invalid phone number format. Use international format (e.g., +1234567890)';
+            } else if (err.code === 'auth/invalid-verification-code') {
+              errorMessage = 'Invalid verification code. Please try again.';
+            } else if (err.code === 'auth/code-expired') {
+              errorMessage = 'Verification code expired. Please request a new code.';
+            }
+            authError.textContent = errorMessage;
+            authError.style.display = 'block';
+            phoneLoginBtn.disabled = false;
+            phoneLoginBtn.textContent = 'Login with Phone';
+          });
+      } catch (err) {
+        authError.textContent = err.message;
+        authError.style.display = 'block';
+        phoneLoginBtn.disabled = false;
+        phoneLoginBtn.textContent = 'Login with Phone';
+      }
     };
 
     onAuthStateChanged(auth, async user => {
@@ -1637,14 +1738,23 @@
 
     window.startChat = async (isAutoStart = false) => {
       const partnerInput = document.getElementById('partnerEmail').value.trim();
+      const searchStatus = document.getElementById('searchStatus');
+      
       if (!partnerInput) {
         if (!isAutoStart) {
-          alert('Enter a partner email, username, or phone number');
+          searchStatus.textContent = '⚠️ Please enter email, username, or phone number';
+          searchStatus.style.color = '#d9534f';
+          searchStatus.style.display = 'block';
+          setTimeout(() => { searchStatus.style.display = 'none'; }, 3000);
         }
         return;
       }
 
       try {
+        searchStatus.textContent = '🔍 Looking for user...';
+        searchStatus.style.color = '#00a884';
+        searchStatus.style.display = 'block';
+        
         const partnerInputLower = partnerInput.toLowerCase();
         let snapshot;
 
@@ -1671,9 +1781,9 @@
         }
 
         if (snapshot.empty) {
-          if (!isAutoStart) {
-            alert('User not found. Please check the email, username, or phone number. The person must have signed up and logged in at least once.');
-          }
+          searchStatus.textContent = '❌ User not found. They must sign up first.';
+          searchStatus.style.color = '#d9534f';
+          setTimeout(() => { searchStatus.style.display = 'none'; }, 5000);
           return;
         }
 
@@ -1686,6 +1796,9 @@
 
         // Check if already chatting with this partner
         if (partnerId === newPartnerId && messagesRef && chatId) {
+          searchStatus.textContent = '✓ Already chatting with this user';
+          searchStatus.style.color = '#00a884';
+          setTimeout(() => { searchStatus.style.display = 'none'; }, 2000);
           return; // Already in this chat, no need to reload
         }
 
@@ -1694,6 +1807,9 @@
         chatId = ids.join('_');
         messagesRef = collection(db, 'chats', chatId, 'messages');
 
+        searchStatus.textContent = '✓ Chat started! Loading messages...';
+        searchStatus.style.color = '#00a884';
+        
         document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
         // Update chat header with partner's profile data
@@ -1709,12 +1825,18 @@
         setTimeout(() => {
           const spinner = document.querySelector('.loading-spinner');
           if (spinner) spinner.remove();
-        }, 500);
+          searchStatus.style.display = 'none';
+        }, 1000);
+        
+        // Focus on message input
+        setTimeout(() => {
+          document.getElementById('textMsg').focus();
+        }, 1200);
       } catch (err) {
         console.error('Error starting chat:', err);
-        if (!isAutoStart) {
-          alert('Error starting chat: ' + err.message);
-        }
+        searchStatus.textContent = '❌ Error: ' + err.message;
+        searchStatus.style.color = '#d9534f';
+        setTimeout(() => { searchStatus.style.display = 'none'; }, 5000);
       }
     };
 
