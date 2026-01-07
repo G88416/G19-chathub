@@ -1023,7 +1023,7 @@
     function updateChatHeader(partnerEmail, photoURL = null, name = null) {
       const displayName = name || partnerEmail;
       const avatar = photoURL 
-        ? `<img src="${photoURL}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+        ? createImagePreview(photoURL)
         : displayName.charAt(0).toUpperCase();
       
       document.getElementById('chatAvatar').innerHTML = avatar;
@@ -1056,6 +1056,11 @@
       document.getElementById('profileSetupModal').classList.remove('show');
     };
 
+    // Helper function to create image preview
+    function createImagePreview(src) {
+      return `<img src="${src}" style="width: 100%; height: 100%; object-fit: cover;">`;
+    }
+
     // Handle profile photo preview
     document.addEventListener('DOMContentLoaded', () => {
       const profilePhotoInput = document.getElementById('profilePhotoInput');
@@ -1065,8 +1070,7 @@
           if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-              const preview = document.getElementById('profilePhotoPreview');
-              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+              document.getElementById('profilePhotoPreview').innerHTML = createImagePreview(event.target.result);
             };
             reader.readAsDataURL(file);
           }
@@ -1080,8 +1084,7 @@
           if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-              const preview = document.getElementById('settingsPhotoPreview');
-              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+              document.getElementById('settingsPhotoPreview').innerHTML = createImagePreview(event.target.result);
             };
             reader.readAsDataURL(file);
           }
@@ -1095,8 +1098,7 @@
           if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-              const preview = document.getElementById('groupPhotoPreview');
-              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+              document.getElementById('groupPhotoPreview').innerHTML = createImagePreview(event.target.result);
             };
             reader.readAsDataURL(file);
           }
@@ -1392,7 +1394,7 @@
         
         // Update sidebar profile avatar
         if (updateData.photoURL) {
-          document.getElementById('userProfileAvatar').innerHTML = `<img src="${updateData.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
+          document.getElementById('userProfileAvatar').innerHTML = createImagePreview(updateData.photoURL);
         } else if (name) {
           document.getElementById('userProfileAvatar').textContent = name.charAt(0).toUpperCase();
         }
@@ -1429,6 +1431,7 @@
         // Parse member emails/usernames
         const memberIdentifiers = groupMembersInput.split(',').map(m => m.trim()).filter(m => m.length > 0);
         const memberIds = [currentUser.uid]; // Creator is always a member
+        const addedMembers = new Set([currentUser.uid]); // Track to prevent duplicates
 
         // Look up user IDs for each member
         for (const identifier of memberIdentifiers) {
@@ -1447,13 +1450,19 @@
           }
 
           if (!snapshot.empty) {
-            memberIds.push(snapshot.docs[0].id);
+            const userId = snapshot.docs[0].id;
+            if (!addedMembers.has(userId)) {
+              memberIds.push(userId);
+              addedMembers.add(userId);
+            }
           }
         }
 
         // Upload group photo if selected
         let photoURL = null;
-        const groupId = `group_${Date.now()}_${currentUser.uid}`;
+        // Use Firebase auto-generated ID for better security
+        const groupRef = doc(collection(db, 'groups'));
+        const groupId = groupRef.id;
         
         if (photoInput.files.length > 0) {
           const file = photoInput.files[0];
@@ -1464,7 +1473,7 @@
         }
 
         // Create group document
-        await setDoc(doc(db, 'groups', groupId), {
+        await setDoc(groupRef, {
           name: groupName,
           description: groupDescription,
           photoURL: photoURL,
@@ -1500,7 +1509,7 @@
           document.getElementById('settingsNotifications').checked = data.settings?.notifications !== false;
           
           if (data.photoURL) {
-            document.getElementById('settingsPhotoPreview').innerHTML = `<img src="${data.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            document.getElementById('settingsPhotoPreview').innerHTML = createImagePreview(data.photoURL);
           }
         }
       } catch (err) {
@@ -1571,7 +1580,7 @@
         
         // Check if user has completed profile setup
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists() || !userDoc.data().name) {
+        if (!userDoc.exists() || !userDoc.data()?.name) {
           // Show profile setup modal for new users or users without name
           window.showProfileSetup();
           return;
@@ -1579,9 +1588,9 @@
         
         // Load user's profile photo
         const userData = userDoc.data();
-        if (userData.photoURL) {
-          document.getElementById('userProfileAvatar').innerHTML = `<img src="${userData.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
-        } else if (userData.name) {
+        if (userData?.photoURL) {
+          document.getElementById('userProfileAvatar').innerHTML = createImagePreview(userData.photoURL);
+        } else if (userData?.name) {
           document.getElementById('userProfileAvatar').textContent = userData.name.charAt(0).toUpperCase();
         }
         

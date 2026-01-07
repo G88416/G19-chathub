@@ -41,9 +41,9 @@ service cloud.firestore {
       allow read: if isSignedIn();
       
       // Only the user can create their own profile
-      // Required fields: name, about (status)
+      // Required field: name
       allow create: if isOwner(userId) 
-        && request.resource.data.keys().hasAll(['name', 'about']);
+        && request.resource.data.keys().hasAll(['name']);
       
       // Only the user can update their own profile
       // Can update: name, about, photoURL, online, lastSeen, settings
