@@ -728,6 +728,87 @@
     </div>
   </div>
 
+  <!-- Profile Setup Modal (shown after signup) -->
+  <div id="profileSetupModal" class="video-modal">
+    <div class="video-modal-content" style="max-width: 500px;">
+      <h4 style="color: #e9edef; margin-bottom: 20px; text-align: center;">
+        <i class="bi bi-person-circle" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+        Set Up Your Profile
+      </h4>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div id="profilePhotoPreview" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('profilePhotoInput').click()">
+          <i class="bi bi-camera" style="font-size: 2rem; color: #8696a0;"></i>
+        </div>
+        <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;">
+        <p style="color: #8696a0; font-size: 0.85rem;">Tap to add profile photo</p>
+      </div>
+      <input type="text" id="profileName" placeholder="Your name (required)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      <textarea id="profileAbout" placeholder="About / Status (optional)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;"></textarea>
+      <button class="auth-btn-primary" onclick="saveProfile()" style="width: 100%;">Save Profile</button>
+      <p id="profileSetupError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="video-modal">
+    <div class="video-modal-content" style="max-width: 600px;">
+      <h4 style="color: #e9edef; margin-bottom: 20px;">
+        <i class="bi bi-gear"></i> Settings
+      </h4>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div id="settingsPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('settingsPhotoInput').click()">
+          <i class="bi bi-camera" style="font-size: 1.5rem; color: #8696a0;"></i>
+        </div>
+        <input type="file" id="settingsPhotoInput" accept="image/*" style="display: none;">
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">Name</label>
+        <input type="text" id="settingsName" placeholder="Your name" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">About</label>
+        <textarea id="settingsAbout" placeholder="Your status" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;"></textarea>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">Notifications</label>
+        <div class="auth-checkbox">
+          <input type="checkbox" id="settingsNotifications" checked>
+          <label for="settingsNotifications">Enable message notifications</label>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="auth-btn-primary" onclick="saveSettings()" style="flex: 1;">Save Changes</button>
+        <button class="auth-btn-secondary" onclick="toggleSettingsModal()" style="flex: 1;">Cancel</button>
+      </div>
+      <p id="settingsError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+      <p id="settingsSuccess" style="color: #00a884; text-align: center; margin-top: 10px; display: none;"></p>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div id="createGroupModal" class="video-modal">
+    <div class="video-modal-content" style="max-width: 500px;">
+      <h4 style="color: #e9edef; margin-bottom: 20px;">
+        <i class="bi bi-people"></i> Create Group
+      </h4>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div id="groupPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('groupPhotoInput').click()">
+          <i class="bi bi-camera" style="font-size: 1.5rem; color: #8696a0;"></i>
+        </div>
+        <input type="file" id="groupPhotoInput" accept="image/*" style="display: none;">
+        <p style="color: #8696a0; font-size: 0.85rem;">Tap to add group photo</p>
+      </div>
+      <input type="text" id="groupName" placeholder="Group name (required)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      <textarea id="groupDescription" placeholder="Group description (optional)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 60px;"></textarea>
+      <input type="text" id="groupMembers" placeholder="Add members (emails/usernames, comma-separated)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      <div style="display: flex; gap: 10px;">
+        <button class="auth-btn-primary" onclick="createGroup()" style="flex: 1;">Create Group</button>
+        <button class="auth-btn-secondary" onclick="toggleCreateGroupModal()" style="flex: 1;">Cancel</button>
+      </div>
+      <p id="groupError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+    </div>
+  </div>
+
   <!-- Connection Status Indicator -->
   <div id="connectionStatus" class="connection-status">
     <i class="bi bi-wifi-off"></i> Disconnected
@@ -740,6 +821,12 @@
       <div class="sidebar-header">
         <h5>ChatHub</h5>
         <div style="display: flex; gap: 15px;">
+          <button class="chat-input-btn" onclick="toggleCreateGroupModal()" title="Create Group">
+            <i class="bi bi-people"></i>
+          </button>
+          <button class="chat-input-btn" onclick="toggleSettingsModal()" title="Settings">
+            <i class="bi bi-gear"></i>
+          </button>
           <button class="chat-input-btn" onclick="logout()" title="Logout">
             <i class="bi bi-box-arrow-right"></i>
           </button>
@@ -942,13 +1029,78 @@
         document.querySelector('.chat-main').classList.remove('hide-mobile');
       }
     }
+
+    // Profile setup and settings functions
+    window.toggleSettingsModal = function() {
+      document.getElementById('settingsModal').classList.toggle('show');
+    };
+
+    window.toggleCreateGroupModal = function() {
+      document.getElementById('createGroupModal').classList.toggle('show');
+    };
+
+    window.showProfileSetup = function() {
+      document.getElementById('profileSetupModal').classList.add('show');
+    };
+
+    window.hideProfileSetup = function() {
+      document.getElementById('profileSetupModal').classList.remove('show');
+    };
+
+    // Handle profile photo preview
+    document.addEventListener('DOMContentLoaded', () => {
+      const profilePhotoInput = document.getElementById('profilePhotoInput');
+      if (profilePhotoInput) {
+        profilePhotoInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const preview = document.getElementById('profilePhotoPreview');
+              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      const settingsPhotoInput = document.getElementById('settingsPhotoInput');
+      if (settingsPhotoInput) {
+        settingsPhotoInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const preview = document.getElementById('settingsPhotoPreview');
+              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      const groupPhotoInput = document.getElementById('groupPhotoInput');
+      if (groupPhotoInput) {
+        groupPhotoInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const preview = document.getElementById('groupPhotoPreview');
+              preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    });
   </script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
-             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc } 
+             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc } 
       from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -1136,16 +1288,216 @@
         }
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const emailLower = email.toLowerCase().trim();
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          email: email,
-          emailLower: emailLower,
-          username: username.length > 0 ? username : null,  // Username already converted to lowercase for case-insensitive lookup
-          online: true,
-          lastSeen: serverTimestamp()
-        });
+        // Show profile setup modal instead of immediately creating profile
+        window.showProfileSetup();
       } catch (err) {
         alert(err.message);
+      }
+    };
+
+    window.saveProfile = async () => {
+      const name = document.getElementById('profileName').value.trim();
+      const about = document.getElementById('profileAbout').value.trim() || 'Hey there! I am using ChatHub';
+      const photoInput = document.getElementById('profilePhotoInput');
+      const errorEl = document.getElementById('profileSetupError');
+      
+      if (!name) {
+        errorEl.textContent = 'Name is required';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      errorEl.style.display = 'none';
+      
+      try {
+        let photoURL = null;
+        
+        // Upload profile photo if selected
+        if (photoInput.files.length > 0) {
+          const file = photoInput.files[0];
+          const path = `profiles/${currentUser.uid}/${Date.now()}_${file.name}`;
+          const sref = storageRef(storage, path);
+          await uploadBytes(sref, file);
+          photoURL = await getDownloadURL(sref);
+        }
+
+        const username = document.getElementById('username').value.trim().toLowerCase();
+        const email = currentUser.email;
+        const emailLower = email ? email.toLowerCase().trim() : null;
+        
+        await setDoc(doc(db, 'users', currentUser.uid), {
+          email: email,
+          emailLower: emailLower,
+          username: username.length > 0 ? username : null,
+          name: name,
+          about: about,
+          photoURL: photoURL,
+          online: true,
+          lastSeen: serverTimestamp(),
+          settings: {
+            notifications: true
+          }
+        });
+        
+        window.hideProfileSetup();
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    };
+
+    window.saveSettings = async () => {
+      const name = document.getElementById('settingsName').value.trim();
+      const about = document.getElementById('settingsAbout').value.trim();
+      const notifications = document.getElementById('settingsNotifications').checked;
+      const photoInput = document.getElementById('settingsPhotoInput');
+      const errorEl = document.getElementById('settingsError');
+      const successEl = document.getElementById('settingsSuccess');
+      
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!name) {
+        errorEl.textContent = 'Name is required';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const updateData = {
+          name: name,
+          about: about,
+          'settings.notifications': notifications
+        };
+
+        // Upload new profile photo if selected
+        if (photoInput.files.length > 0) {
+          const file = photoInput.files[0];
+          const path = `profiles/${currentUser.uid}/${Date.now()}_${file.name}`;
+          const sref = storageRef(storage, path);
+          await uploadBytes(sref, file);
+          updateData.photoURL = await getDownloadURL(sref);
+        }
+
+        await setDoc(doc(db, 'users', currentUser.uid), updateData, { merge: true });
+        
+        successEl.textContent = 'Settings saved successfully!';
+        successEl.style.display = 'block';
+        
+        setTimeout(() => {
+          window.toggleSettingsModal();
+          successEl.style.display = 'none';
+        }, 1500);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    };
+
+    window.createGroup = async () => {
+      const groupName = document.getElementById('groupName').value.trim();
+      const groupDescription = document.getElementById('groupDescription').value.trim();
+      const groupMembersInput = document.getElementById('groupMembers').value.trim();
+      const photoInput = document.getElementById('groupPhotoInput');
+      const errorEl = document.getElementById('groupError');
+      
+      errorEl.style.display = 'none';
+
+      if (!groupName) {
+        errorEl.textContent = 'Group name is required';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        // Parse member emails/usernames
+        const memberIdentifiers = groupMembersInput.split(',').map(m => m.trim()).filter(m => m.length > 0);
+        const memberIds = [currentUser.uid]; // Creator is always a member
+
+        // Look up user IDs for each member
+        for (const identifier of memberIdentifiers) {
+          const identifierLower = identifier.toLowerCase();
+          let q = query(collection(db, 'users'), where('emailLower', '==', identifierLower));
+          let snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            q = query(collection(db, 'users'), where('username', '==', identifierLower));
+            snapshot = await getDocs(q);
+          }
+          
+          if (snapshot.empty) {
+            q = query(collection(db, 'users'), where('phone', '==', identifier));
+            snapshot = await getDocs(q);
+          }
+
+          if (!snapshot.empty) {
+            memberIds.push(snapshot.docs[0].id);
+          }
+        }
+
+        // Upload group photo if selected
+        let photoURL = null;
+        const groupId = `group_${Date.now()}_${currentUser.uid}`;
+        
+        if (photoInput.files.length > 0) {
+          const file = photoInput.files[0];
+          const path = `groups/${groupId}/${Date.now()}_${file.name}`;
+          const sref = storageRef(storage, path);
+          await uploadBytes(sref, file);
+          photoURL = await getDownloadURL(sref);
+        }
+
+        // Create group document
+        await setDoc(doc(db, 'groups', groupId), {
+          name: groupName,
+          description: groupDescription,
+          photoURL: photoURL,
+          members: memberIds,
+          admins: [currentUser.uid],
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        alert('Group created successfully!');
+        window.toggleCreateGroupModal();
+        
+        // Clear form
+        document.getElementById('groupName').value = '';
+        document.getElementById('groupDescription').value = '';
+        document.getElementById('groupMembers').value = '';
+        document.getElementById('groupPhotoPreview').innerHTML = '<i class="bi bi-camera" style="font-size: 1.5rem; color: #8696a0;"></i>';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    };
+
+    window.loadUserSettings = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          document.getElementById('settingsName').value = data.name || '';
+          document.getElementById('settingsAbout').value = data.about || '';
+          document.getElementById('settingsNotifications').checked = data.settings?.notifications !== false;
+          
+          if (data.photoURL) {
+            document.getElementById('settingsPhotoPreview').innerHTML = `<img src="${data.photoURL}" style="width: 100%; height: 100%; object-fit: cover;">`;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading settings:', err);
+      }
+    };
+
+    // Override toggleSettingsModal to load settings when opened
+    const originalToggleSettings = window.toggleSettingsModal;
+    window.toggleSettingsModal = function() {
+      originalToggleSettings();
+      if (document.getElementById('settingsModal').classList.contains('show')) {
+        window.loadUserSettings();
       }
     };
 
@@ -1197,9 +1549,18 @@
         .catch(err => alert(err.message));
     };
 
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
         currentUser = user;
+        
+        // Check if user has completed profile setup
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || !userDoc.data().name) {
+          // Show profile setup modal for new users or users without name
+          window.showProfileSetup();
+          return;
+        }
+        
         document.getElementById('auth').classList.add('d-none');
         document.getElementById('chat').classList.remove('d-none');
         const emailLower = user.email ? user.email.toLowerCase().trim() : null;
@@ -1220,6 +1581,7 @@
         currentUser = null;
         document.getElementById('auth').classList.remove('d-none');
         document.getElementById('chat').classList.add('d-none');
+        window.hideProfileSetup();
         if (unsubMessages) unsubMessages();
         window.hangup();
         window.hangupAudio();
