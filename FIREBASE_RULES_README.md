@@ -1,11 +1,19 @@
 # Firebase Security Rules
 
-This directory contains security rules for Firestore and Cloud Storage that protect your chat application.
+This directory contains **enhanced and comprehensive** security rules for Firestore and Cloud Storage that protect your chat application.
+
+## Recent Updates (Latest)
+
+✅ **Enhanced Documentation**: All rules now include detailed inline comments explaining their purpose and security rationale  
+✅ **Field Validation**: Added explicit validation for required fields in messages, profiles, and groups  
+✅ **Security Improvements**: Enhanced comments clarifying authentication flows and security measures  
+✅ **Better Organization**: Rules organized with clear section headers for easy navigation  
+✅ **Login Support**: Rules explicitly support email, username, and phone authentication methods  
 
 ## Files
 
-- `firestore.rules` - Security rules for Firestore database
-- `storage.rules` - Security rules for Cloud Storage
+- `firestore.rules` - Security rules for Firestore database (enhanced with comprehensive documentation)
+- `storage.rules` - Security rules for Cloud Storage (enhanced with comprehensive documentation)
 
 ## Deploying the Rules
 
@@ -45,59 +53,95 @@ firebase deploy --only firestore:rules,storage:rules
 
 ### Firestore Rules
 
-The Firestore rules protect:
+The **enhanced** Firestore rules protect:
 
 1. **User Profiles** (`/users/{userId}`)
    - ✅ Anyone authenticated can read user profiles (needed to search for chat partners)
    - ✅ Users can only create/update their own profile
-   - ❌ No one can delete profiles
+   - ✅ **NEW**: Explicit validation - 'name' field is required on profile creation
+   - ✅ Supports email, username, and phone authentication methods
+   - ✅ Enables profile photo uploads and status updates
+   - ❌ No one can delete profiles (maintains chat history integrity)
 
 2. **Chat Messages** (`/chats/{chatId}/messages/{messageId}`)
    - ✅ Only chat participants can read messages
    - ✅ Participants can send messages with their own senderId
+   - ✅ **NEW**: Explicit validation - messages must include senderId, type, and timestamp
    - ✅ Messages are immutable (no updates/deletes) to preserve chat history
    - ✅ Messages persist forever - chat history never disappears
    - ✅ Self-chat support (user can chat with themselves)
    - ✅ Server timestamp validation
+   - ✅ Protection against message spoofing
+
+3. **Group Chats** (`/groups/{groupId}`)
+   - ✅ Anyone authenticated can discover groups
+   - ✅ **NEW**: Groups must have name, members, and admins on creation
+   - ✅ Only admins can update group settings (name, description, members)
+   - ✅ Only group members can read and send messages
+   - ✅ **NEW**: Group messages require senderId, type, and timestamp fields
+   - ✅ Group typing indicators for real-time interaction
+   - ✅ Admin-only group photo management
 
 3. **Typing Status** (`/chats/{chatId}/status/typing`)
    - ✅ Participants can read and update typing indicators
    - ✅ Users can only set their own typing status
+   - ✅ Real-time "user is typing..." indicators
 
 4. **Voice/Video Call Signaling** (`/chats/{chatId}/call/*`)
    - ✅ Participants can create/read call offers and answers
    - ✅ Participants can exchange ICE candidates for WebRTC
    - ✅ Support for both audio-only and video calls
    - ✅ Call state management for tracking active calls
+   - ✅ Secure peer-to-peer communication setup
 
 ### Storage Rules
 
-The Storage rules protect:
+The **enhanced** Storage rules protect:
 
-1. **File Uploads** (`/files/{chatId}/{fileName}`)
+1. **Profile Photos** (`/profiles/{userId}/{fileName}`)
+   - ✅ Anyone authenticated can view profile photos
+   - ✅ Users can only upload their own profile photo
+   - ✅ Max size: 5MB
+   - ✅ Allowed types: images only (jpeg, png, gif, webp)
+   - ✅ Users can delete their own profile photos
+   - ✅ **Enhanced**: Detailed documentation of use cases
+
+2. **Group Photos** (`/groups/{groupId}/{fileName}`)
+   - ✅ Anyone authenticated can view group photos
+   - ✅ Only admins can upload/update/delete group photos
+   - ✅ Max size: 5MB
+   - ✅ Allowed types: images only
+   - ✅ **Enhanced**: Admin verification via Firestore query
+
+3. **File Uploads** (`/files/{chatId}/{fileName}`)
    - ✅ Only chat participants can access files
    - ✅ Max file size: 10MB
    - ✅ Allowed types: images, videos, audio, PDFs, documents, text
    - ✅ Files are immutable (no updates/deletes)
+   - ✅ **Enhanced**: Comprehensive file type validation
 
-2. **Voice Messages** (`/voice/{chatId}/{fileName}`)
+4. **Voice Messages** (`/voice/{chatId}/{fileName}`)
    - ✅ Only chat participants can access voice messages
    - ✅ Max file size: 5MB
    - ✅ Must be audio type
    - ✅ Voice messages are immutable
    - ✅ Self-chat support included
+   - ✅ **Enhanced**: Detailed audio format support
 
 ## Key Security Principles
 
 1. **Authentication Required**: All operations require users to be signed in
 2. **Authorization**: Users can only access their own chats (chatId contains their userId)
 3. **Data Validation**: Server timestamps and senderIds are validated
-4. **Immutability**: Messages and files cannot be edited or deleted - preserves chat history
-5. **Size Limits**: File uploads are limited to prevent abuse
-6. **Type Validation**: File types are restricted to safe formats
-7. **Auto-Start Support**: Rules allow participants to automatically start/join chats and read chat metadata for seamless user experience
-8. **Self-Chat Support**: Users can chat with themselves (useful for personal notes)
-9. **History Preservation**: Chat messages are never deleted and always remain accessible
+4. **Field Validation**: Required fields are enforced (name, senderId, type, timestamp)
+5. **Immutability**: Messages and files cannot be edited or deleted - preserves chat history
+6. **Size Limits**: File uploads are limited to prevent abuse (10MB files, 5MB voice/photos)
+7. **Type Validation**: File types are restricted to safe formats
+8. **Auto-Start Support**: Rules allow participants to automatically start/join chats and read chat metadata
+9. **Self-Chat Support**: Users can chat with themselves (useful for personal notes)
+10. **History Preservation**: Chat messages are never deleted and always remain accessible
+11. **Security Against Attacks**: Regex patterns prevent chatId injection and spoofing attacks
+12. **Multi-Auth Support**: Rules support email, username, and phone number authentication
 
 ## chatId Format
 
