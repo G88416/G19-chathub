@@ -56,19 +56,20 @@
     }
     
     .sidebar-search {
-      padding: 10px;
+      padding: 12px;
       background: #202c33;
       border-bottom: 1px solid #2a3942;
     }
     
     .sidebar-search input {
       width: 100%;
-      padding: 10px 15px;
+      padding: 12px 16px;
       background: #111b21;
       border: 1px solid #2a3942;
       border-radius: 8px;
       color: #e9edef;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
     
     .sidebar-search input::placeholder {
@@ -288,12 +289,13 @@
     .auth-card input {
       width: 100%;
       padding: 12px 16px;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
       background: #2a3942;
       border: 1px solid #2a3942;
       border-radius: 6px;
       color: #e9edef;
       font-size: 0.95rem;
+      line-height: 1.5;
     }
     
     .auth-card input::placeholder {
@@ -308,14 +310,15 @@
     
     .auth-card button {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
       border: none;
       border-radius: 6px;
       font-size: 1rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      line-height: 1.5;
     }
     
     .auth-btn-primary {
@@ -339,8 +342,9 @@
     .auth-checkbox {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 4px 0;
     }
     
     .auth-checkbox input[type="checkbox"] {
@@ -384,22 +388,25 @@
     
     .video-controls {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       justify-content: center;
-      margin-top: 15px;
+      margin-top: 20px;
       flex-wrap: wrap;
+      padding: 0 10px;
     }
     
     .video-controls button {
-      padding: 10px 20px;
+      padding: 12px 24px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      font-weight: 500;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      line-height: 1.5;
     }
     
     .video-btn-start {
@@ -481,13 +488,13 @@
     /* Chat input area */
     .chat-input-wrapper {
       background: #202c33;
-      padding: 12px 20px;
+      padding: 16px 20px;
       border-top: 1px solid #2a3942;
     }
     
     .chat-input-container {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
     }
     
@@ -499,6 +506,7 @@
       border-radius: 8px;
       color: #e9edef;
       font-size: 0.95rem;
+      line-height: 1.5;
     }
     
     .chat-input-container input[type="text"]::placeholder {
@@ -738,28 +746,28 @@
         Set Up Your Profile
       </h4>
       <p style="color: #8696a0; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">Help your friends recognize you</p>
-      <div style="text-align: center; margin-bottom: 20px;">
+      <div style="text-align: center; margin-bottom: 25px;">
         <div id="profilePhotoPreview" role="button" tabindex="0" aria-label="Upload profile photo" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
           <i class="bi bi-camera-fill" style="font-size: 2rem; color: #8696a0;"></i>
         </div>
         <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="handleProfilePhotoPreview(event)">
-        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 5px;">
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 0; text-align: center;">
           <i class="bi bi-info-circle"></i> Click to add profile photo (optional)
         </p>
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
           Name <span style="color: #d9534f;">*</span>
         </label>
-        <input type="text" id="profileName" placeholder="e.g., John Doe" maxlength="50" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;" oninput="validateProfileName(this)">
-        <small id="nameCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 3px;">0 / 50 characters</small>
+        <input type="text" id="profileName" placeholder="e.g., John Doe" maxlength="50" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;" oninput="validateProfileName(this)">
+        <small id="nameCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 5px; text-align: right;">0 / 50 characters</small>
       </div>
-      <div style="margin-bottom: 20px;">
-        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 5px;">
+      <div style="margin-bottom: 25px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
           About / Status (optional)
         </label>
-        <textarea id="profileAbout" placeholder="e.g., Hey there! I am using ChatHub" maxlength="139" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;" oninput="updateAboutCharCount(this)"></textarea>
-        <small id="aboutCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 3px;">0 / 139 characters</small>
+        <textarea id="profileAbout" placeholder="e.g., Hey there! I am using ChatHub" maxlength="139" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem; resize: vertical; min-height: 80px; line-height: 1.5;" oninput="updateAboutCharCount(this)"></textarea>
+        <small id="aboutCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 5px; text-align: right;">0 / 139 characters</small>
       </div>
       <p id="profileSetupError" style="color: #d9534f; text-align: center; margin-bottom: 10px; display: none; background: rgba(217, 83, 79, 0.1); padding: 10px; border-radius: 6px;"></p>
       <button class="auth-btn-primary" id="saveProfileBtn" onclick="saveProfile()" style="width: 100%; margin-bottom: 10px;">
@@ -783,19 +791,22 @@
       <h4 style="color: #e9edef; margin-bottom: 20px;">
         <i class="bi bi-gear"></i> Settings
       </h4>
-      <div style="text-align: center; margin-bottom: 20px;">
-        <div id="settingsPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('settingsPhotoInput').click()">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <div id="settingsPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('settingsPhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
           <i class="bi bi-camera" style="font-size: 1.5rem; color: #8696a0;"></i>
         </div>
         <input type="file" id="settingsPhotoInput" accept="image/*" style="display: none;">
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 0; text-align: center;">
+          <i class="bi bi-info-circle"></i> Click to change photo
+        </p>
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">Name</label>
-        <input type="text" id="settingsName" placeholder="Your name" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">Name</label>
+        <input type="text" id="settingsName" placeholder="Your name" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;">
       </div>
-      <div style="margin-bottom: 15px;">
-        <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">About</label>
-        <textarea id="settingsAbout" placeholder="Your status" style="width: 100%; padding: 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 80px;"></textarea>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">About</label>
+        <textarea id="settingsAbout" placeholder="Your status" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem; resize: vertical; min-height: 80px; line-height: 1.5;"></textarea>
       </div>
       <div style="margin-bottom: 20px;">
         <label style="color: #8696a0; font-size: 0.85rem; display: block; margin-bottom: 5px;">Notifications</label>
@@ -819,16 +830,33 @@
       <h4 style="color: #e9edef; margin-bottom: 20px;">
         <i class="bi bi-people"></i> Create Group
       </h4>
-      <div style="text-align: center; margin-bottom: 20px;">
-        <div id="groupPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer;" onclick="document.getElementById('groupPhotoInput').click()">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <div id="groupPhotoPreview" style="width: 100px; height: 100px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('groupPhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
           <i class="bi bi-camera" style="font-size: 1.5rem; color: #8696a0;"></i>
         </div>
         <input type="file" id="groupPhotoInput" accept="image/*" style="display: none;">
-        <p style="color: #8696a0; font-size: 0.85rem;">Tap to add group photo</p>
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 0; text-align: center;">
+          <i class="bi bi-info-circle"></i> Click to add group photo
+        </p>
       </div>
-      <input type="text" id="groupName" placeholder="Group name (required)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
-      <textarea id="groupDescription" placeholder="Group description (optional)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; resize: vertical; min-height: 60px;"></textarea>
-      <input type="text" id="groupMembers" placeholder="Add members (emails/usernames, comma-separated)" style="width: 100%; padding: 12px; margin-bottom: 15px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef;">
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
+          Group Name <span style="color: #d9534f;">*</span>
+        </label>
+        <input type="text" id="groupName" placeholder="e.g., Project Team" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
+          Group Description (optional)
+        </label>
+        <textarea id="groupDescription" placeholder="e.g., Team collaboration group" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem; resize: vertical; min-height: 60px; line-height: 1.5;"></textarea>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
+          Add Members
+        </label>
+        <input type="text" id="groupMembers" placeholder="Enter emails/usernames (comma-separated)" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;">
+      </div>
       <div style="display: flex; gap: 10px;">
         <button class="auth-btn-primary" onclick="createGroup()" style="flex: 1;">Create Group</button>
         <button class="auth-btn-secondary" onclick="toggleCreateGroupModal()" style="flex: 1;">Cancel</button>
@@ -863,6 +891,7 @@
           <button class="chat-input-btn" onclick="logout()" title="Logout">
             <i class="bi bi-box-arrow-right"></i>
           </button>
+        </div>
       </div>
       <div class="sidebar-search">
         <div style="display: flex; gap: 5px; align-items: center;">
