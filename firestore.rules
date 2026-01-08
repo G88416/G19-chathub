@@ -10,6 +10,32 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Validate that the email being set/updated matches the authenticated email
+    // This avoids get() operations and works for both create and update operations
+    function isEmailMatchingAuth(email) {
+      return request.auth.token.email == null || email == request.auth.token.email;
+    }
+    
+    // Validate that the phone being set/updated matches the authenticated phone
+    // This avoids get() operations and works for both create and update operations
+    function isPhoneMatchingAuth(phone) {
+      return request.auth.token.phone_number == null || phone == request.auth.token.phone_number;
+    }
+    
+    // Check if email field is being set or updated correctly
+    // Returns true if: email not in data, OR email matches auth token
+    function isEmailValid() {
+      return !request.resource.data.keys().hasAny(['email']) 
+        || isEmailMatchingAuth(request.resource.data.email);
+    }
+    
+    // Check if phone field is being set or updated correctly
+    // Returns true if: phone not in data, OR phone matches auth token
+    function isPhoneValid() {
+      return !request.resource.data.keys().hasAny(['phone']) 
+        || isPhoneMatchingAuth(request.resource.data.phone);
+    }
+    
     // Check if user is the owner of a document
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
@@ -60,10 +86,14 @@ service cloud.firestore {
       // Required on creation: name (display name, must be non-empty string)
       // Optional fields: email, emailLower, username, phone, photoURL, about
       // Authentication fields: email/username/phone are set during login
+      // Enhanced: Ensures that if email is provided, it matches Firebase Auth email
+      //           Ensures that if phone is provided, it matches Firebase Auth phone
       allow create: if isOwner(userId) 
         && request.resource.data.keys().hasAll(['name'])
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0;
+        && request.resource.data.name.size() > 0
+        && isEmailValid()
+        && isPhoneValid();
       
       // UPDATE: Users can only update their own profile
       // Allows updates to: name, about, photoURL, online status, lastSeen, settings
@@ -71,7 +101,20 @@ service cloud.firestore {
       // - Profile editing in settings
       // - Online status tracking during active sessions
       // - Notification preferences
-      allow update: if isOwner(userId);
+      // Enhanced: Users cannot change their email/phone to values that don't match Firebase Auth
+      allow update: if isOwner(userId)
+        && (
+          // Email can stay the same OR match auth token
+          !('email' in request.resource.data) 
+          || request.resource.data.email == resource.data.email 
+          || isEmailMatchingAuth(request.resource.data.email)
+        )
+        && (
+          // Phone can stay the same OR match auth token
+          !('phone' in request.resource.data) 
+          || request.resource.data.phone == resource.data.phone 
+          || isPhoneMatchingAuth(request.resource.data.phone)
+        );
       
       // DELETE: Profile deletion is not allowed to maintain chat history integrity
       // If deletion is needed, it should be handled by Firebase Admin SDK

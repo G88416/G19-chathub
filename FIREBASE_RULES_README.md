@@ -4,6 +4,7 @@ This directory contains **enhanced and comprehensive** security rules for Firest
 
 ## Recent Updates (Latest)
 
+✅ **NEW - Authentication Identity Verification (Latest)**: Enhanced rules verify that Firebase Auth credentials (email/phone) match Firestore profile data  
 ✅ **Enhanced Documentation**: All rules now include detailed inline comments explaining their purpose and security rationale  
 ✅ **Field Validation**: Added explicit validation for required fields in messages, profiles, and groups  
 ✅ **Security Improvements**: Enhanced comments clarifying authentication flows and security measures  
@@ -12,8 +13,9 @@ This directory contains **enhanced and comprehensive** security rules for Firest
 
 ## Files
 
-- `firestore.rules` - Security rules for Firestore database (enhanced with comprehensive documentation)
+- `firestore.rules` - Security rules for Firestore database (enhanced with comprehensive documentation and auth verification)
 - `storage.rules` - Security rules for Cloud Storage (enhanced with comprehensive documentation)
+- `AUTH_ENHANCEMENT_GUIDE.md` - Detailed guide on authentication verification enhancements
 
 ## Deploying the Rules
 
@@ -55,7 +57,19 @@ firebase deploy --only firestore:rules,storage:rules
 
 The **enhanced** Firestore rules protect:
 
-1. **User Profiles** (`/users/{userId}`)
+1. **Authentication Identity Verification** (NEW)
+   - ✅ **NEW**: Helper functions verify Firebase Auth email/phone against Firestore profile
+   - ✅ **NEW**: `isEmailMatchingAuth(email)` - Validates email matches Firebase Auth token
+   - ✅ **NEW**: `isPhoneMatchingAuth(phone)` - Validates phone matches Firebase Auth token
+   - ✅ **NEW**: `isEmailValid()` - Validates email field in create/update requests
+   - ✅ **NEW**: `isPhoneValid()` - Validates phone field in create/update requests
+   - ✅ **NEW**: Profile creation validates email/phone match Firebase Auth credentials
+   - ✅ **NEW**: Profile updates prevent changing email/phone to mismatched values
+   - ✅ **NEW**: Optimized implementation without get() operations for better performance
+   - ✅ Prevents identity spoofing and profile hijacking
+   - ✅ Ensures consistency between Firebase Auth and Firestore data
+
+2. **User Profiles** (`/users/{userId}`)
    - ✅ Anyone authenticated can read user profiles (needed to search for chat partners)
    - ✅ Users can only create/update their own profile
    - ✅ **NEW**: Explicit validation - 'name' field is required on profile creation
@@ -142,6 +156,7 @@ The **enhanced** Storage rules protect:
 10. **History Preservation**: Chat messages are never deleted and always remain accessible
 11. **Security Against Attacks**: Regex patterns prevent chatId injection and spoofing attacks
 12. **Multi-Auth Support**: Rules support email, username, and phone number authentication
+13. **Identity Verification**: NEW - Verifies Firebase Auth credentials match Firestore profile data
 
 ## chatId Format
 
