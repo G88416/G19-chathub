@@ -59,11 +59,13 @@ The **enhanced** Firestore rules protect:
 
 1. **Authentication Identity Verification** (NEW)
    - ✅ **NEW**: Helper functions verify Firebase Auth email/phone against Firestore profile
-   - ✅ **NEW**: `isAuthEmailVerified(userId)` - Validates auth email matches profile email
-   - ✅ **NEW**: `isAuthPhoneVerified(userId)` - Validates auth phone matches profile phone
-   - ✅ **NEW**: `isAuthIdentityVerified(userId)` - Validates email OR phone match
+   - ✅ **NEW**: `isEmailMatchingAuth(email)` - Validates email matches Firebase Auth token
+   - ✅ **NEW**: `isPhoneMatchingAuth(phone)` - Validates phone matches Firebase Auth token
+   - ✅ **NEW**: `isEmailValid()` - Validates email field in create/update requests
+   - ✅ **NEW**: `isPhoneValid()` - Validates phone field in create/update requests
    - ✅ **NEW**: Profile creation validates email/phone match Firebase Auth credentials
    - ✅ **NEW**: Profile updates prevent changing email/phone to mismatched values
+   - ✅ **NEW**: Optimized implementation without get() operations for better performance
    - ✅ Prevents identity spoofing and profile hijacking
    - ✅ Ensures consistency between Firebase Auth and Firestore data
 
@@ -152,9 +154,9 @@ The **enhanced** Storage rules protect:
 8. **Auto-Start Support**: Rules allow participants to automatically start/join chats and read chat metadata
 9. **Self-Chat Support**: Users can chat with themselves (useful for personal notes)
 10. **History Preservation**: Chat messages are never deleted and always remain accessible
-9. **Security Against Attacks**: Regex patterns prevent chatId injection and spoofing attacks
-10. **Multi-Auth Support**: Rules support email, username, and phone number authentication
-11. **Identity Verification**: NEW - Verifies Firebase Auth credentials match Firestore profile data
+11. **Security Against Attacks**: Regex patterns prevent chatId injection and spoofing attacks
+12. **Multi-Auth Support**: Rules support email, username, and phone number authentication
+13. **Identity Verification**: NEW - Verifies Firebase Auth credentials match Firestore profile data
 
 ## chatId Format
 
