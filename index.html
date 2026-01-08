@@ -937,6 +937,7 @@
       <div class="chat-input-wrapper">
         <div class="emoji-picker" id="emojiPicker"></div>
         <p id="recordingStatus" style="text-align: center; margin-bottom: 8px; color: #8696a0; font-size: 0.85rem;"></p>
+        <p id="messageCharCount" style="text-align: right; margin-bottom: 5px; color: #8696a0; font-size: 0.75rem; display: none;">0 / 4096</p>
         <div class="chat-input-container">
           <button class="chat-input-btn" onclick="toggleEmojiPicker()" title="Add emoji">
             <i class="bi bi-emoji-smile"></i>
@@ -945,7 +946,7 @@
           <button class="chat-input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
             <i class="bi bi-paperclip"></i>
           </button>
-          <input type="text" id="textMsg" placeholder="Type a message" aria-label="Message">
+          <input type="text" id="textMsg" placeholder="Type a message" aria-label="Message" maxlength="4096">
           <button class="chat-input-btn" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
             <i class="bi bi-mic"></i>
           </button>
@@ -1361,6 +1362,80 @@
       }
     };
 
+    // Security and validation utilities
+    const ValidationUtils = {
+      // Email validation using RFC 5322 compliant regex
+      isValidEmail: (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      },
+      
+      // Password strength validation
+      isStrongPassword: (password) => {
+        // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+        const hasMinLength = password.length >= 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        return {
+          isValid: hasMinLength && hasUpperCase && hasLowerCase && hasNumber,
+          hasMinLength,
+          hasUpperCase,
+          hasLowerCase,
+          hasNumber
+        };
+      },
+      
+      // Sanitize text to prevent XSS
+      sanitizeText: (text) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      },
+      
+      // Validate message length
+      isValidMessageLength: (text) => {
+        const MAX_MESSAGE_LENGTH = 4096; // 4KB max message size
+        return text.length > 0 && text.length <= MAX_MESSAGE_LENGTH;
+      }
+    };
+
+    // Rate limiting utility
+    const RateLimiter = {
+      lastMessageTime: 0,
+      messageCount: 0,
+      resetTime: Date.now(),
+      
+      canSendMessage: () => {
+        const now = Date.now();
+        const MESSAGE_COOLDOWN = 500; // 500ms between messages
+        const MAX_MESSAGES_PER_MINUTE = 30;
+        
+        // Reset counter every minute
+        if (now - RateLimiter.resetTime > 60000) {
+          RateLimiter.messageCount = 0;
+          RateLimiter.resetTime = now;
+        }
+        
+        // Check cooldown
+        if (now - RateLimiter.lastMessageTime < MESSAGE_COOLDOWN) {
+          return { allowed: false, reason: 'Please wait before sending another message' };
+        }
+        
+        // Check rate limit
+        if (RateLimiter.messageCount >= MAX_MESSAGES_PER_MINUTE) {
+          return { allowed: false, reason: 'Too many messages. Please wait a moment.' };
+        }
+        
+        return { allowed: true };
+      },
+      
+      recordMessage: () => {
+        RateLimiter.lastMessageTime = Date.now();
+        RateLimiter.messageCount++;
+      }
+    };
+
     let currentUser = null;
     let partnerId = null;
     let chatId = null;
@@ -1518,14 +1593,30 @@
       authError.style.display = 'none';
       authSuccess.style.display = 'none';
       
+      // Enhanced validation
       if (!email || !password) {
         authError.textContent = 'Please fill in email and password';
         authError.style.display = 'block';
         return;
       }
 
-      if (password.length < 6) {
-        authError.textContent = 'Password must be at least 6 characters';
+      // Validate email format
+      if (!ValidationUtils.isValidEmail(email)) {
+        authError.textContent = 'Please enter a valid email address';
+        authError.style.display = 'block';
+        return;
+      }
+
+      // Enhanced password validation
+      const passwordCheck = ValidationUtils.isStrongPassword(password);
+      if (!passwordCheck.isValid) {
+        let errorMsg = 'Password must have: ';
+        const missing = [];
+        if (!passwordCheck.hasMinLength) missing.push('8+ characters');
+        if (!passwordCheck.hasUpperCase) missing.push('1 uppercase letter');
+        if (!passwordCheck.hasLowerCase) missing.push('1 lowercase letter');
+        if (!passwordCheck.hasNumber) missing.push('1 number');
+        authError.textContent = errorMsg + missing.join(', ');
         authError.style.display = 'block';
         return;
       }
@@ -1534,9 +1625,12 @@
         signupBtn.disabled = true;
         signupBtn.textContent = 'Signing up...';
         
+        // Sanitize username input
+        const sanitizedUsername = ValidationUtils.sanitizeText(username);
+        
         // Check if username is unique (if provided)
-        if (username.length > 0) {
-          const q = query(collection(db, 'users'), where('username', '==', username));
+        if (sanitizedUsername.length > 0) {
+          const q = query(collection(db, 'users'), where('username', '==', sanitizedUsername));
           const snap = await getDocs(q);
           if (!snap.empty) {
             authError.textContent = 'Username already taken';
@@ -1553,7 +1647,15 @@
         // Show profile setup modal instead of immediately creating profile
         setTimeout(() => window.showProfileSetup(), 500);
       } catch (err) {
-        authError.textContent = err.message;
+        let errorMessage = err.message;
+        if (err.code === 'auth/email-already-in-use') {
+          errorMessage = 'This email is already registered. Please login instead.';
+        } else if (err.code === 'auth/invalid-email') {
+          errorMessage = 'Invalid email format.';
+        } else if (err.code === 'auth/weak-password') {
+          errorMessage = 'Password is too weak. Please use a stronger password.';
+        }
+        authError.textContent = errorMessage;
         authError.style.display = 'block';
       } finally {
         signupBtn.disabled = false;
@@ -1838,8 +1940,16 @@
       authError.style.display = 'none';
       authSuccess.style.display = 'none';
 
+      // Enhanced validation
       if (!emailOrUsername || !password) {
         authError.textContent = 'Please enter email/username and password';
+        authError.style.display = 'block';
+        return;
+      }
+
+      // Validate email format if not using username
+      if (!useUsername && !ValidationUtils.isValidEmail(emailOrUsername)) {
+        authError.textContent = 'Please enter a valid email address';
         authError.style.display = 'block';
         return;
       }
@@ -1851,8 +1961,9 @@
         let email = emailOrUsername;
 
         if (useUsername) {
-          // Lookup email by username (case-insensitive)
-          const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
+          // Sanitize and lookup email by username (case-insensitive)
+          const sanitizedUsername = ValidationUtils.sanitizeText(emailOrUsername.toLowerCase());
+          const q = query(collection(db, 'users'), where('username', '==', sanitizedUsername));
           const snap = await getDocs(q);
           if (snap.empty) {
             authError.textContent = 'Username not found';
@@ -1910,6 +2021,8 @@
           errorMessage = 'Invalid email or password. Please try again.';
         } else if (err.code === 'auth/too-many-requests') {
           errorMessage = 'Too many login attempts. Please try again later.';
+        } else if (err.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your connection and try again.';
         }
         authError.textContent = errorMessage;
         authError.style.display = 'block';
@@ -1936,6 +2049,16 @@
         return;
       }
 
+      // Validate phone number format (must start with +)
+      if (!phone.startsWith('+')) {
+        authError.textContent = 'Phone number must include country code (e.g., +1234567890)';
+        authError.style.display = 'block';
+        return;
+      }
+
+      // Sanitize phone input
+      const sanitizedPhone = ValidationUtils.sanitizeText(phone);
+
       phoneLoginBtn.disabled = true;
       phoneLoginBtn.textContent = 'Sending SMS...';
 
@@ -1946,7 +2069,7 @@
       
       try {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+        signInWithPhoneNumber(auth, sanitizedPhone, window.recaptchaVerifier)
           .then(confirmationResult => {
             phoneLoginBtn.disabled = false;
             phoneLoginBtn.textContent = 'Login with Phone';
@@ -1957,6 +2080,15 @@
             if (!code) {
               authError.textContent = 'Login cancelled';
               authError.style.display = 'block';
+              authSuccess.style.display = 'none';
+              return;
+            }
+            
+            // Validate code format
+            if (!/^\d{6}$/.test(code)) {
+              authError.textContent = 'Invalid code format. Please enter 6 digits.';
+              authError.style.display = 'block';
+              authSuccess.style.display = 'none';
               return;
             }
             
@@ -1968,6 +2100,7 @@
           .then(() => {
             authSuccess.textContent = 'Phone login successful!';
             authSuccess.style.display = 'block';
+            authError.style.display = 'none';
           })
           .catch(err => {
             let errorMessage = err.message;
@@ -1977,9 +2110,12 @@
               errorMessage = 'Invalid verification code. Please try again.';
             } else if (err.code === 'auth/code-expired') {
               errorMessage = 'Verification code expired. Please request a new code.';
+            } else if (err.code === 'auth/too-many-requests') {
+              errorMessage = 'Too many attempts. Please try again later.';
             }
             authError.textContent = errorMessage;
             authError.style.display = 'block';
+            authSuccess.style.display = 'none';
             phoneLoginBtn.disabled = false;
             phoneLoginBtn.textContent = 'Login with Phone';
           });
@@ -1995,36 +2131,43 @@
       if (user) {
         currentUser = user;
         
-        // Check if user has completed profile setup
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists() || !userDoc.data()?.name) {
-          // Show profile setup modal for new users or users without name
-          // Hide auth container so user doesn't see login form behind modal
+        try {
+          // Check if user has completed profile setup
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (!userDoc.exists() || !userDoc.data()?.name) {
+            // Show profile setup modal for new users or users without name
+            // Hide auth container so user doesn't see login form behind modal
+            document.getElementById('auth').classList.add('d-none');
+            window.showProfileSetup();
+            return;
+          }
+          
+          // Load user's profile photo
+          const userData = userDoc.data();
+          if (userData?.photoURL) {
+            document.getElementById('userProfileAvatar').innerHTML = createImagePreview(userData.photoURL);
+          } else if (userData?.name) {
+            document.getElementById('userProfileAvatar').textContent = userData.name.charAt(0).toUpperCase();
+          }
+          
           document.getElementById('auth').classList.add('d-none');
-          window.showProfileSetup();
-          return;
+          document.getElementById('chat').classList.remove('d-none');
+          const emailLower = user.email ? user.email.toLowerCase().trim() : null;
+          await setDoc(doc(db, 'users', user.uid), {
+            email: user.email,
+            emailLower: emailLower,
+            phone: user.phoneNumber,
+            online: true,
+            lastSeen: serverTimestamp()
+          }, { merge: true });
+          // Start online status updates
+          startOnlineStatusUpdates();
+        } catch (err) {
+          logger.error('Error during authentication state change:', err);
+          // If there's an error loading user data, sign out to prevent broken state
+          await signOut(auth);
+          alert('Failed to load user profile. Please try logging in again.');
         }
-        
-        // Load user's profile photo
-        const userData = userDoc.data();
-        if (userData?.photoURL) {
-          document.getElementById('userProfileAvatar').innerHTML = createImagePreview(userData.photoURL);
-        } else if (userData?.name) {
-          document.getElementById('userProfileAvatar').textContent = userData.name.charAt(0).toUpperCase();
-        }
-        
-        document.getElementById('auth').classList.add('d-none');
-        document.getElementById('chat').classList.remove('d-none');
-        const emailLower = user.email ? user.email.toLowerCase().trim() : null;
-        setDoc(doc(db, 'users', user.uid), {
-          email: user.email,
-          emailLower: emailLower,
-          phone: user.phoneNumber,
-          online: true,
-          lastSeen: serverTimestamp()
-        }, { merge: true });
-        // Start online status updates
-        startOnlineStatusUpdates();
       } else {
         currentUser = null;
         // Clear online status timer on logout
@@ -2059,6 +2202,15 @@
       const partnerInput = document.getElementById('partnerEmail').value.trim();
       const searchStatus = document.getElementById('searchStatus');
       
+      // Validate user is authenticated
+      if (!currentUser) {
+        searchStatus.textContent = '⚠️ Please login first';
+        searchStatus.style.color = '#d9534f';
+        searchStatus.style.display = 'block';
+        setTimeout(() => { searchStatus.style.display = 'none'; }, 3000);
+        return;
+      }
+      
       if (!partnerInput) {
         if (!isAutoStart) {
           searchStatus.textContent = '⚠️ Please enter email, username, or phone number';
@@ -2069,12 +2221,15 @@
         return;
       }
 
+      // Sanitize input
+      const sanitizedInput = ValidationUtils.sanitizeText(partnerInput);
+
       try {
         searchStatus.textContent = '🔍 Looking for user...';
         searchStatus.style.color = '#00a884';
         searchStatus.style.display = 'block';
         
-        const partnerInputLower = partnerInput.toLowerCase();
+        const partnerInputLower = sanitizedInput.toLowerCase();
         let snapshot;
 
         // Try to find user by email first (case-insensitive with emailLower)
@@ -2083,7 +2238,7 @@
 
         // If not found by emailLower, try the original email field (for backwards compatibility)
         if (snapshot.empty) {
-          q = query(collection(db, 'users'), where('email', '==', partnerInput));
+          q = query(collection(db, 'users'), where('email', '==', sanitizedInput));
           snapshot = await getDocs(q);
         }
 
@@ -2095,7 +2250,7 @@
 
         // If not found by username, try phone number
         if (snapshot.empty) {
-          q = query(collection(db, 'users'), where('phone', '==', partnerInput));
+          q = query(collection(db, 'users'), where('phone', '==', sanitizedInput));
           snapshot = await getDocs(q);
         }
 
@@ -2132,7 +2287,7 @@
         document.getElementById('messages').innerHTML = '<div class="loading-spinner show"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
         
         // Update chat header with partner's profile data
-        const displayName = partnerData?.name || partnerInput;
+        const displayName = partnerData?.name || sanitizedInput;
         const photoURL = partnerData?.photoURL || null;
         updateChatHeader(displayName, photoURL, displayName);
         
@@ -2153,7 +2308,7 @@
         }, 1200);
       } catch (err) {
         logger.error('Error starting chat:', err);
-        searchStatus.textContent = '❌ Error: ' + err.message;
+        searchStatus.textContent = '❌ Error: ' + (err.message || 'Unable to start chat');
         searchStatus.style.color = '#d9534f';
         setTimeout(() => { searchStatus.style.display = 'none'; }, 5000);
       }
@@ -2279,11 +2434,83 @@
     }
 
     window.sendText = async () => {
-      const text = document.getElementById('textMsg').value.trim();
-      if (!text || !messagesRef) return;
-      await addDoc(messagesRef, { senderId: currentUser.uid, type: 'text', text, timestamp: serverTimestamp() });
-      document.getElementById('textMsg').value = '';
-      updateTypingStatus(false);
+      const textInput = document.getElementById('textMsg');
+      const text = textInput.value.trim();
+      const sendBtn = document.querySelector('.chat-input-btn.send');
+      
+      // Validate authentication
+      if (!currentUser) {
+        alert('You must be logged in to send messages');
+        return;
+      }
+      
+      // Validate chat is active
+      if (!messagesRef || !chatId) {
+        alert('Please start a chat first before sending messages');
+        return;
+      }
+      
+      // Validate message
+      if (!text) {
+        return;
+      }
+      
+      // Sanitize message
+      const sanitizedText = ValidationUtils.sanitizeText(text);
+      
+      // Validate message length
+      if (!ValidationUtils.isValidMessageLength(sanitizedText)) {
+        alert('Message is too long. Maximum length is 4096 characters.');
+        return;
+      }
+      
+      // Check rate limit
+      const rateLimitCheck = RateLimiter.canSendMessage();
+      if (!rateLimitCheck.allowed) {
+        alert(rateLimitCheck.reason);
+        return;
+      }
+      
+      try {
+        // Disable send button and show loading state
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        textInput.disabled = true;
+        
+        // Send message
+        await addDoc(messagesRef, { 
+          senderId: currentUser.uid, 
+          type: 'text', 
+          text: sanitizedText, 
+          timestamp: serverTimestamp() 
+        });
+        
+        // Clear input and update rate limiter
+        textInput.value = '';
+        RateLimiter.recordMessage();
+        updateTypingStatus(false);
+      } catch (err) {
+        logger.error('Error sending message:', err);
+        let errorMsg = 'Failed to send message. ';
+        
+        if (err.code === 'permission-denied') {
+          errorMsg += 'You do not have permission to send messages in this chat.';
+        } else if (err.code === 'unavailable') {
+          errorMsg += 'Network error. Please check your connection.';
+        } else {
+          errorMsg += 'Please try again.';
+        }
+        
+        alert(errorMsg);
+        // Restore text on error so user doesn't lose their message
+        textInput.value = text;
+      } finally {
+        // Re-enable send button
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '1';
+        textInput.disabled = false;
+        textInput.focus();
+      }
     };
 
     document.getElementById('textMsg').addEventListener('keydown', e => { 
@@ -2308,6 +2535,24 @@
         isTyping = false;
         updateTypingStatus(false);
       }, 2000);
+      
+      // Update character count
+      const charCount = document.getElementById('messageCharCount');
+      const length = e.target.value.length;
+      charCount.textContent = `${length} / 4096`;
+      
+      if (length > 0) {
+        charCount.style.display = 'block';
+        if (length > 3800) {
+          charCount.style.color = '#d9534f'; // Red when approaching limit
+        } else if (length > 3500) {
+          charCount.style.color = '#ffa500'; // Orange when getting close
+        } else {
+          charCount.style.color = '#8696a0'; // Default gray
+        }
+      } else {
+        charCount.style.display = 'none';
+      }
     });
 
     // File upload (images show inline, videos play, others downloadable)
