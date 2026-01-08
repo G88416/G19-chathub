@@ -4,6 +4,8 @@ This directory contains **enhanced and comprehensive** security rules for Firest
 
 ## Recent Updates (Latest)
 
+✅ **Profile Rules & Indexes**: Added firestore.indexes.json with indexes for profile queries (username, email, phone)  
+✅ **Firebase Configuration**: Created firebase.json to configure rules and indexes deployment  
 ✅ **Enhanced Documentation**: All rules now include detailed inline comments explaining their purpose and security rationale  
 ✅ **Field Validation**: Added explicit validation for required fields in messages, profiles, and groups  
 ✅ **Security Improvements**: Enhanced comments clarifying authentication flows and security measures  
@@ -13,7 +15,10 @@ This directory contains **enhanced and comprehensive** security rules for Firest
 ## Files
 
 - `firestore.rules` - Security rules for Firestore database (enhanced with comprehensive documentation)
+- `firestore.indexes.json` - Index definitions for efficient profile queries
+- `firebase.json` - Firebase project configuration for rules and indexes
 - `storage.rules` - Security rules for Cloud Storage (enhanced with comprehensive documentation)
+- `PROFILE_RULES_INDEXES.md` - Detailed documentation for profile rules and indexes
 
 ## Deploying the Rules
 
@@ -33,7 +38,7 @@ This directory contains **enhanced and comprehensive** security rules for Firest
 
 ### Option 2: Using Firebase CLI
 
-If you have Firebase CLI installed, you can deploy both rules at once:
+If you have Firebase CLI installed, you can deploy rules and indexes together:
 
 ```bash
 # Install Firebase CLI (if not already installed)
@@ -45,11 +50,36 @@ firebase login
 # Initialize Firebase in your project (if not already done)
 firebase init
 
-# Deploy the rules
+# Deploy rules and indexes together
+firebase deploy --only firestore
+
+# Or deploy individually:
+# Deploy only rules
 firebase deploy --only firestore:rules,storage:rules
+
+# Deploy only indexes
+firebase deploy --only firestore:indexes
 ```
 
 ## Security Features
+
+### Firestore Indexes
+
+The `firestore.indexes.json` file defines indexes for efficient profile queries:
+
+1. **username** - For username-based login and user search
+2. **emailLower** - For case-insensitive email authentication
+3. **email** - For direct email queries
+4. **phone** - For phone number authentication
+
+These indexes enable:
+- Fast user lookup during login (by email, username, or phone)
+- Efficient user search for starting chats
+- Quick profile queries for group invitations
+
+**Note**: These are single-field indexes that Firestore can automatically create when needed, but defining them explicitly ensures consistent performance and prevents runtime index creation prompts.
+
+For detailed information about profile rules and indexes, see [PROFILE_RULES_INDEXES.md](PROFILE_RULES_INDEXES.md).
 
 ### Firestore Rules
 
