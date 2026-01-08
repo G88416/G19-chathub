@@ -953,7 +953,7 @@
           <button class="chat-input-btn" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording" style="display: none;">
             <i class="bi bi-stop-circle"></i>
           </button>
-          <button class="chat-input-btn send" onclick="sendText()" title="Send message">
+          <button class="chat-input-btn send" id="sendBtn" onclick="sendText()" title="Send message">
             <i class="bi bi-send-fill"></i>
           </button>
         </div>
@@ -1322,6 +1322,7 @@
     const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
     const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
     const ERROR_HIDE_TIMEOUT = 3000; // Time to hide error messages (ms)
+    const SMS_CODE_PATTERN = /^\d{6}$/; // Pattern for validating 6-digit SMS codes
 
     // Logging configuration
     // To enable/disable logging, set LOG_CONFIG.enabled = true/false
@@ -1364,7 +1365,8 @@
 
     // Security and validation utilities
     const ValidationUtils = {
-      // Email validation using RFC 5322 compliant regex
+      // Basic email validation using simplified regex pattern
+      // Note: This is not fully RFC 5322 compliant but covers most common email formats
       isValidEmail: (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -2085,7 +2087,7 @@
             }
             
             // Validate code format
-            if (!/^\d{6}$/.test(code)) {
+            if (!SMS_CODE_PATTERN.test(code)) {
               authError.textContent = 'Invalid code format. Please enter 6 digits.';
               authError.style.display = 'block';
               authSuccess.style.display = 'none';
@@ -2436,7 +2438,7 @@
     window.sendText = async () => {
       const textInput = document.getElementById('textMsg');
       const text = textInput.value.trim();
-      const sendBtn = document.querySelector('.chat-input-btn.send');
+      const sendBtn = document.getElementById('sendBtn'); // More robust selector using ID
       
       // Validate authentication
       if (!currentUser) {

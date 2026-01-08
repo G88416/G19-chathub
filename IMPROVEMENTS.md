@@ -8,7 +8,8 @@ This document describes the improvements made to the chat code and user authenti
 ### 1. Email Validation
 **Before:** No email format validation
 **After:** 
-- RFC 5322 compliant email validation using regex pattern `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+- Basic email validation using simplified regex pattern `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+- Validates most common email formats (not fully RFC 5322 compliant, but covers practical use cases)
 - Validation occurs before signup and login attempts
 - Clear error message: "Please enter a valid email address"
 
