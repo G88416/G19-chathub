@@ -10,43 +10,57 @@ Previously, the Firestore rules only verified that a user was authenticated (`re
 
 ### 1. New Helper Functions
 
-#### `isAuthEmailVerified(userId)`
-Verifies that the authenticated user's email (from Firebase Auth token) matches the email stored in their Firestore profile.
+#### `isEmailMatchingAuth(email)`
+Validates that the provided email matches the authenticated user's email from Firebase Auth token. Returns true if no auth email exists (allows graceful fallback) or if the emails match.
 
 ```javascript
-function isAuthEmailVerified(userId) {
-  return isSignedIn() 
-    && request.auth.token.email != null
-    && get(/databases/$(database)/documents/users/$(userId)).data.email == request.auth.token.email;
+function isEmailMatchingAuth(email) {
+  return request.auth.token.email == null || email == request.auth.token.email;
 }
 ```
 
-**Use case:** When a user authenticated with email tries to start a chat, this ensures their Firebase Auth email matches their profile email.
+**Benefits:**
+- No `get()` operations, making it efficient and avoiding read limits
+- Works for both create and update operations
+- Graceful fallback when auth email is not set
 
-#### `isAuthPhoneVerified(userId)`
-Verifies that the authenticated user's phone number (from Firebase Auth token) matches the phone stored in their Firestore profile.
+#### `isPhoneMatchingAuth(phone)`
+Validates that the provided phone number matches the authenticated user's phone from Firebase Auth token. Returns true if no auth phone exists or if the phones match.
 
 ```javascript
-function isAuthPhoneVerified(userId) {
-  return isSignedIn() 
-    && request.auth.token.phone_number != null
-    && get(/databases/$(database)/documents/users/$(userId)).data.phone == request.auth.token.phone_number;
+function isPhoneMatchingAuth(phone) {
+  return request.auth.token.phone_number == null || phone == request.auth.token.phone_number;
 }
 ```
 
-**Use case:** When a user authenticated with phone tries to start a chat, this ensures their Firebase Auth phone matches their profile phone.
+**Benefits:**
+- No `get()` operations, making it efficient and avoiding read limits
+- Works for both create and update operations
+- Graceful fallback when auth phone is not set
 
-#### `isAuthIdentityVerified(userId)`
-Checks if the user's authentication identity (either email or phone) is verified against their profile.
+#### `isEmailValid()`
+Checks if the email field in the request is valid - either not present or matches the authenticated email.
 
 ```javascript
-function isAuthIdentityVerified(userId) {
-  return isSignedIn() 
-    && (isAuthEmailVerified(userId) || isAuthPhoneVerified(userId));
+function isEmailValid() {
+  return !request.resource.data.keys().hasAny(['email']) 
+    || isEmailMatchingAuth(request.resource.data.email);
 }
 ```
 
-**Use case:** General purpose verification that works for both email and phone authentication methods.
+**Use case:** Profile creation and updates - ensures email consistency with Firebase Auth.
+
+#### `isPhoneValid()`
+Checks if the phone field in the request is valid - either not present or matches the authenticated phone.
+
+```javascript
+function isPhoneValid() {
+  return !request.resource.data.keys().hasAny(['phone']) 
+    || isPhoneMatchingAuth(request.resource.data.phone);
+}
+```
+
+**Use case:** Profile creation and updates - ensures phone consistency with Firebase Auth.
 
 ### 2. Enhanced User Profile Rules
 
@@ -60,17 +74,8 @@ allow create: if isOwner(userId)
   && request.resource.data.keys().hasAll(['name'])
   && request.resource.data.name is string
   && request.resource.data.name.size() > 0
-  && (
-    // If email is being set, it must match the authenticated email
-    (!request.resource.data.keys().hasAny(['email']) || 
-     request.auth.token.email == null ||
-     request.resource.data.email == request.auth.token.email)
-    &&
-    // If phone is being set, it must match the authenticated phone
-    (!request.resource.data.keys().hasAny(['phone']) || 
-     request.auth.token.phone_number == null ||
-     request.resource.data.phone == request.auth.token.phone_number)
-  );
+  && isEmailValid()
+  && isPhoneValid();
 ```
 
 **Security benefit:** Prevents users from creating profiles with email/phone credentials that don't belong to them.
@@ -84,19 +89,16 @@ When a user updates their profile, the rules now ensure that:
 ```javascript
 allow update: if isOwner(userId)
   && (
-    // If updating email, it must match the authenticated email
-    (!request.resource.data.keys().hasAny(['email']) || 
-     !('email' in request.resource.data) ||
-     request.resource.data.email == resource.data.email ||
-     request.auth.token.email == null ||
-     request.resource.data.email == request.auth.token.email)
-    &&
-    // If updating phone, it must match the authenticated phone
-    (!request.resource.data.keys().hasAny(['phone']) || 
-     !('phone' in request.resource.data) ||
-     request.resource.data.phone == resource.data.phone ||
-     request.auth.token.phone_number == null ||
-     request.resource.data.phone == request.auth.token.phone_number)
+    // Email can stay the same OR match auth token
+    !('email' in request.resource.data) 
+    || request.resource.data.email == resource.data.email 
+    || isEmailMatchingAuth(request.resource.data.email)
+  )
+  && (
+    // Phone can stay the same OR match auth token
+    !('phone' in request.resource.data) 
+    || request.resource.data.phone == resource.data.phone 
+    || isPhoneMatchingAuth(request.resource.data.phone)
   );
 ```
 
@@ -155,6 +157,13 @@ The Firebase Auth token (`request.auth.token`) contains the following relevant p
 ✅ Works with email/password authentication
 ✅ Works with phone number authentication
 ✅ Can be extended to support other providers (Google, Facebook, etc.)
+
+### 5. Performance and Efficiency (Optimized Implementation)
+✅ No `get()` operations for validation, avoiding read operation costs
+✅ No risk of hitting Firestore's 10 get() operations limit per request
+✅ Efficient rule evaluation without external document reads
+✅ Helper functions are reusable and maintainable
+✅ Clear, readable code structure
 
 ## Testing Recommendations
 

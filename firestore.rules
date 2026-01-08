@@ -10,27 +10,30 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Check if authenticated user's email matches the stored email in their profile
-    // This verifies that the Firebase Auth email matches the Firestore profile
-    function isAuthEmailVerified(userId) {
-      return isSignedIn() 
-        && request.auth.token.email != null
-        && get(/databases/$(database)/documents/users/$(userId)).data.email == request.auth.token.email;
+    // Validate that the email being set/updated matches the authenticated email
+    // This avoids get() operations and works for both create and update operations
+    function isEmailMatchingAuth(email) {
+      return request.auth.token.email == null || email == request.auth.token.email;
     }
     
-    // Check if authenticated user's phone matches the stored phone in their profile
-    // This verifies that the Firebase Auth phone matches the Firestore profile
-    function isAuthPhoneVerified(userId) {
-      return isSignedIn() 
-        && request.auth.token.phone_number != null
-        && get(/databases/$(database)/documents/users/$(userId)).data.phone == request.auth.token.phone_number;
+    // Validate that the phone being set/updated matches the authenticated phone
+    // This avoids get() operations and works for both create and update operations
+    function isPhoneMatchingAuth(phone) {
+      return request.auth.token.phone_number == null || phone == request.auth.token.phone_number;
     }
     
-    // Check if user's authentication identity (email or phone) matches their profile
-    // This ensures the authenticated identity is consistent with stored profile data
-    function isAuthIdentityVerified(userId) {
-      return isSignedIn() 
-        && (isAuthEmailVerified(userId) || isAuthPhoneVerified(userId));
+    // Check if email field is being set or updated correctly
+    // Returns true if: email not in data, OR email matches auth token
+    function isEmailValid() {
+      return !request.resource.data.keys().hasAny(['email']) 
+        || isEmailMatchingAuth(request.resource.data.email);
+    }
+    
+    // Check if phone field is being set or updated correctly
+    // Returns true if: phone not in data, OR phone matches auth token
+    function isPhoneValid() {
+      return !request.resource.data.keys().hasAny(['phone']) 
+        || isPhoneMatchingAuth(request.resource.data.phone);
     }
     
     // Check if user is the owner of a document
@@ -89,17 +92,8 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['name'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
-        && (
-          // If email is being set, it must match the authenticated email
-          (!request.resource.data.keys().hasAny(['email']) || 
-           request.auth.token.email == null ||
-           request.resource.data.email == request.auth.token.email)
-          &&
-          // If phone is being set, it must match the authenticated phone
-          (!request.resource.data.keys().hasAny(['phone']) || 
-           request.auth.token.phone_number == null ||
-           request.resource.data.phone == request.auth.token.phone_number)
-        );
+        && isEmailValid()
+        && isPhoneValid();
       
       // UPDATE: Users can only update their own profile
       // Allows updates to: name, about, photoURL, online status, lastSeen, settings
@@ -110,19 +104,16 @@ service cloud.firestore {
       // Enhanced: Users cannot change their email/phone to values that don't match Firebase Auth
       allow update: if isOwner(userId)
         && (
-          // If updating email, it must match the authenticated email
-          (!request.resource.data.keys().hasAny(['email']) || 
-           !('email' in request.resource.data) ||
-           request.resource.data.email == resource.data.email ||
-           request.auth.token.email == null ||
-           request.resource.data.email == request.auth.token.email)
-          &&
-          // If updating phone, it must match the authenticated phone
-          (!request.resource.data.keys().hasAny(['phone']) || 
-           !('phone' in request.resource.data) ||
-           request.resource.data.phone == resource.data.phone ||
-           request.auth.token.phone_number == null ||
-           request.resource.data.phone == request.auth.token.phone_number)
+          // Email can stay the same OR match auth token
+          !('email' in request.resource.data) 
+          || request.resource.data.email == resource.data.email 
+          || isEmailMatchingAuth(request.resource.data.email)
+        )
+        && (
+          // Phone can stay the same OR match auth token
+          !('phone' in request.resource.data) 
+          || request.resource.data.phone == resource.data.phone 
+          || isPhoneMatchingAuth(request.resource.data.phone)
         );
       
       // DELETE: Profile deletion is not allowed to maintain chat history integrity
