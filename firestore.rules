@@ -10,6 +10,29 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Check if authenticated user's email matches the stored email in their profile
+    // This verifies that the Firebase Auth email matches the Firestore profile
+    function isAuthEmailVerified(userId) {
+      return isSignedIn() 
+        && request.auth.token.email != null
+        && get(/databases/$(database)/documents/users/$(userId)).data.email == request.auth.token.email;
+    }
+    
+    // Check if authenticated user's phone matches the stored phone in their profile
+    // This verifies that the Firebase Auth phone matches the Firestore profile
+    function isAuthPhoneVerified(userId) {
+      return isSignedIn() 
+        && request.auth.token.phone_number != null
+        && get(/databases/$(database)/documents/users/$(userId)).data.phone == request.auth.token.phone_number;
+    }
+    
+    // Check if user's authentication identity (email or phone) matches their profile
+    // This ensures the authenticated identity is consistent with stored profile data
+    function isAuthIdentityVerified(userId) {
+      return isSignedIn() 
+        && (isAuthEmailVerified(userId) || isAuthPhoneVerified(userId));
+    }
+    
     // Check if user is the owner of a document
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
@@ -60,10 +83,23 @@ service cloud.firestore {
       // Required on creation: name (display name, must be non-empty string)
       // Optional fields: email, emailLower, username, phone, photoURL, about
       // Authentication fields: email/username/phone are set during login
+      // Enhanced: Ensures that if email is provided, it matches Firebase Auth email
+      //           Ensures that if phone is provided, it matches Firebase Auth phone
       allow create: if isOwner(userId) 
         && request.resource.data.keys().hasAll(['name'])
         && request.resource.data.name is string
-        && request.resource.data.name.size() > 0;
+        && request.resource.data.name.size() > 0
+        && (
+          // If email is being set, it must match the authenticated email
+          (!request.resource.data.keys().hasAny(['email']) || 
+           request.auth.token.email == null ||
+           request.resource.data.email == request.auth.token.email)
+          &&
+          // If phone is being set, it must match the authenticated phone
+          (!request.resource.data.keys().hasAny(['phone']) || 
+           request.auth.token.phone_number == null ||
+           request.resource.data.phone == request.auth.token.phone_number)
+        );
       
       // UPDATE: Users can only update their own profile
       // Allows updates to: name, about, photoURL, online status, lastSeen, settings
@@ -71,7 +107,23 @@ service cloud.firestore {
       // - Profile editing in settings
       // - Online status tracking during active sessions
       // - Notification preferences
-      allow update: if isOwner(userId);
+      // Enhanced: Users cannot change their email/phone to values that don't match Firebase Auth
+      allow update: if isOwner(userId)
+        && (
+          // If updating email, it must match the authenticated email
+          (!request.resource.data.keys().hasAny(['email']) || 
+           !('email' in request.resource.data) ||
+           request.resource.data.email == resource.data.email ||
+           request.auth.token.email == null ||
+           request.resource.data.email == request.auth.token.email)
+          &&
+          // If updating phone, it must match the authenticated phone
+          (!request.resource.data.keys().hasAny(['phone']) || 
+           !('phone' in request.resource.data) ||
+           request.resource.data.phone == resource.data.phone ||
+           request.auth.token.phone_number == null ||
+           request.resource.data.phone == request.auth.token.phone_number)
+        );
       
       // DELETE: Profile deletion is not allowed to maintain chat history integrity
       // If deletion is needed, it should be handled by Firebase Admin SDK
