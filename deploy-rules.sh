@@ -2,8 +2,18 @@
 
 # Firebase Rules Deployment Script for G19-ChatHub
 # This script deploys Firestore and Storage security rules to Firebase
+#
+# Usage:
+#   ./deploy-rules.sh          # Interactive mode
+#   ./deploy-rules.sh --yes    # Non-interactive mode (auto-confirm)
 
 set -e  # Exit on error
+
+# Check for --yes flag for non-interactive mode
+NON_INTERACTIVE=false
+if [ "$1" == "--yes" ] || [ "$1" == "-y" ] || [ "$1" == "--force" ]; then
+    NON_INTERACTIVE=true
+fi
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
 echo "║  Firebase Security Rules Deployment - G19-ChatHub                  ║"
@@ -50,18 +60,23 @@ fi
 echo "✓ Rules files found"
 echo ""
 
-# Display the project
-PROJECT=$(firebase projects:list | grep "g19-chathub" || echo "")
+# Display the project - use more precise grep with word boundaries
+PROJECT=$(firebase projects:list 2>/dev/null | grep -w "g19-chathub" || echo "")
 if [ -z "$PROJECT" ]; then
     echo "⚠️  Warning: Project 'g19-chathub' not found in your Firebase projects."
     echo "Available projects:"
     firebase projects:list
     echo ""
-    read -p "Do you want to continue anyway? (y/N): " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Deployment cancelled."
-        exit 1
+    
+    if [ "$NON_INTERACTIVE" = false ]; then
+        read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+        echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Deployment cancelled."
+            exit 1
+        fi
+    else
+        echo "Running in non-interactive mode. Continuing with deployment..."
     fi
 fi
 
