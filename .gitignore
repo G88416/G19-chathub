@@ -21,3 +21,9 @@ build/
 
 # Test files
 test-*.md
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

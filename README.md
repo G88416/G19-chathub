@@ -2,6 +2,26 @@
 
 A real-time chat application with WhatsApp-inspired UI, built with Firebase and WebRTC.
 
+## 🚨 IMPORTANT: First-Time Setup Required
+
+**If you're getting "Missing or insufficient permissions" errors**, you need to deploy the Firebase security rules first!
+
+### Quick Fix (2 minutes):
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login
+firebase login
+
+# Deploy the rules
+firebase deploy --only firestore:rules,storage:rules
+```
+
+**OR** see the complete guide: [QUICK_FIX_PERMISSIONS.md](QUICK_FIX_PERMISSIONS.md)
+
+---
+
 ## Features
 
 ### 🎨 WhatsApp-Style UI
@@ -129,6 +149,78 @@ For local development:
 python3 -m http.server 8080
 # Then open http://localhost:8080
 ```
+
+## 🚀 Deployment
+
+### Deploy Security Rules (Required!)
+
+The app requires Firebase security rules to be deployed before it will work.
+
+**Method 1: Using Firebase CLI**
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Deploy rules
+firebase deploy --only firestore:rules,storage:rules
+
+# OR use the deployment script
+./deploy-rules.sh
+```
+
+**Method 2: Using Firebase Console**
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select project: **g19-chathub**
+3. Deploy Firestore rules:
+   - Navigate to **Firestore Database** → **Rules**
+   - Copy contents of `firestore.rules`
+   - Paste and click **Publish**
+4. Deploy Storage rules:
+   - Navigate to **Storage** → **Rules**
+   - Copy contents of `storage.rules`
+   - Paste and click **Publish**
+
+**For detailed instructions, see:** [QUICK_FIX_PERMISSIONS.md](QUICK_FIX_PERMISSIONS.md)
+
+### Deploy App (Optional - Hosting)
+
+To deploy the app itself to Firebase Hosting:
+```bash
+firebase deploy --only hosting
+```
+
+## 🔧 Troubleshooting
+
+### "Missing or insufficient permissions" Error
+
+This is the most common issue. It means Firebase security rules haven't been deployed.
+
+**Solution:**
+1. Deploy the rules using one of the methods above
+2. Clear browser cache and cookies
+3. Log out and log back in
+4. Try again
+
+**Still not working?**
+- Verify rules are published in Firebase Console
+- Check that you're signed in
+- Make sure Firestore and Storage are enabled in your Firebase project
+- See [QUICK_FIX_PERMISSIONS.md](QUICK_FIX_PERMISSIONS.md) for detailed troubleshooting
+
+### File Upload Fails
+
+- Check file size (10MB max for files, 5MB for voice/photos)
+- Verify file type is allowed
+- Make sure Storage rules are deployed
+
+### Can't Find Users
+
+- User must be registered in the app first
+- Try both email and username
+- Check that the user profile was created successfully
 
 ## Security Features
 
