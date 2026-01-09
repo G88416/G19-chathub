@@ -9,10 +9,14 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "**/.*",
       "**/node_modules/**",
       "*.md",
-      "*.txt"
+      "*.txt",
+      "*.sh",
+      "firestore.rules",
+      "storage.rules"
     ],
     "rewrites": [
       {
