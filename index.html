@@ -1229,10 +1229,8 @@
         const errorEl = document.getElementById('profileSetupError');
         let errorMessage = '';
         
-        if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-          errorMessage = '❌ PERMISSION ERROR: Firebase security rules not deployed!\n\n' +
-                        'Please deploy Firebase security rules to continue.\n' +
-                        'See QUICK_FIX_PERMISSIONS.md for instructions.';
+        if (isPermissionError(err)) {
+          errorMessage = getPermissionErrorMessage();
         } else if (err.code === 'unavailable') {
           errorMessage = '❌ Network error. Please check your connection and try again.';
         } else {
@@ -1379,6 +1377,33 @@
         debug: false   // Show debug messages (enable for detailed debugging)
       }
     };
+    
+    // Helper function to detect permission errors
+    function isPermissionError(err) {
+      return err.code === 'permission-denied' || 
+             err.code === 'PERMISSION_DENIED' ||
+             (err.message && err.message.toLowerCase().includes('permission'));
+    }
+    
+    // Helper function to generate permission error message for users
+    function getPermissionErrorMessage() {
+      return `❌ PERMISSION ERROR: Firebase security rules not deployed!
+
+📋 To fix this issue:
+
+1. Open Firebase Console (https://console.firebase.google.com/)
+2. Select project: g19-chathub
+3. Go to Firestore Database → Rules
+4. Copy contents from firestore.rules file and paste
+5. Click "Publish"
+6. Go to Storage → Rules
+7. Copy contents from storage.rules file and paste
+8. Click "Publish"
+
+OR run: firebase deploy --only firestore:rules,storage:rules
+
+See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
+    }
 
     // Centralized logging utility
     // Usage: logger.error('message', ...args) or logger.warn('message', ...args)
@@ -1800,13 +1825,8 @@
         // Provide specific error messages for different error types
         let errorMessage = '❌ ';
         
-        if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-          errorMessage += 'PERMISSION ERROR: Firebase security rules not deployed!\n\n' +
-                         'Please deploy Firebase security rules:\n' +
-                         '1. Go to Firebase Console → Firestore Database → Rules\n' +
-                         '2. Copy firestore.rules content and publish\n' +
-                         '3. Go to Storage → Rules and publish storage.rules\n\n' +
-                         'See QUICK_FIX_PERMISSIONS.md for details.';
+        if (isPermissionError(err)) {
+          errorMessage += getPermissionErrorMessage();
         } else if (err.code === 'storage/unauthorized') {
           errorMessage += 'Storage permission denied. Please deploy storage.rules to Firebase.';
         } else if (err.code === 'unavailable') {
@@ -2238,19 +2258,8 @@
           // Provide specific error messages for permission issues
           let errorMessage = 'Failed to load user profile. ';
           
-          if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-            errorMessage = '❌ PERMISSION ERROR: Firebase security rules not deployed!\n\n' +
-                          '📋 To fix this issue:\n\n' +
-                          '1. Open Firebase Console (https://console.firebase.google.com/)\n' +
-                          '2. Select project: g19-chathub\n' +
-                          '3. Go to Firestore Database → Rules\n' +
-                          '4. Copy contents from firestore.rules file and paste\n' +
-                          '5. Click "Publish"\n' +
-                          '6. Go to Storage → Rules\n' +
-                          '7. Copy contents from storage.rules file and paste\n' +
-                          '8. Click "Publish"\n\n' +
-                          'OR run: firebase deploy --only firestore:rules,storage:rules\n\n' +
-                          'See QUICK_FIX_PERMISSIONS.md for detailed instructions.';
+          if (isPermissionError(err)) {
+            errorMessage = getPermissionErrorMessage();
           } else if (err.code === 'unavailable') {
             errorMessage += 'Network error. Please check your connection.';
           } else {
