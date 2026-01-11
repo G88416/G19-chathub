@@ -1379,6 +1379,7 @@
     };
     
     // Helper function to detect permission errors
+    // Checks for both lowercase and uppercase variants as some Firebase SDKs/errors may use different casing
     function isPermissionError(err) {
       return err.code === 'permission-denied' || 
              err.code === 'PERMISSION_DENIED' ||
@@ -1386,6 +1387,7 @@
     }
     
     // Helper function to generate permission error message for users
+    // Note: Project name 'g19-chathub' is specific to this project
     function getPermissionErrorMessage() {
       return `❌ PERMISSION ERROR: Firebase security rules not deployed!
 
@@ -2238,7 +2240,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           document.getElementById('auth').classList.add('d-none');
           document.getElementById('chat').classList.remove('d-none');
           
-          // Only update user status if profile already exists (prevents permission errors during setup)
+          // Only update user status if profile already exists and has required fields
+          // userData is defined above at line 2231, so this check is safe
+          // This prevents unnecessary Firestore writes during profile setup
           if (userDoc.exists() && userData?.name) {
             const emailLower = user.email ? user.email.toLowerCase().trim() : null;
             await setDoc(doc(db, 'users', user.uid), {
