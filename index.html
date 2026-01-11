@@ -1823,16 +1823,16 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         logger.error('Error saving profile:', err);
         
         // Provide specific error messages for different error types
-        let errorMessage = '❌ ';
+        let errorMessage;
         
         if (isPermissionError(err)) {
-          errorMessage += getPermissionErrorMessage();
+          errorMessage = getPermissionErrorMessage();
         } else if (err.code === 'storage/unauthorized') {
-          errorMessage += 'Storage permission denied. Please deploy storage.rules to Firebase.';
+          errorMessage = '❌ Storage permission denied. Please deploy storage.rules to Firebase.';
         } else if (err.code === 'unavailable') {
-          errorMessage += 'Network error. Please check your connection and try again.';
+          errorMessage = '❌ Network error. Please check your connection and try again.';
         } else {
-          errorMessage += err.message;
+          errorMessage = '❌ ' + err.message;
         }
         
         errorEl.textContent = errorMessage;
@@ -2256,14 +2256,14 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           logger.error('Error during authentication state change:', err);
           
           // Provide specific error messages for permission issues
-          let errorMessage = 'Failed to load user profile. ';
+          let errorMessage;
           
           if (isPermissionError(err)) {
             errorMessage = getPermissionErrorMessage();
           } else if (err.code === 'unavailable') {
-            errorMessage += 'Network error. Please check your connection.';
+            errorMessage = 'Failed to load user profile. Network error. Please check your connection.';
           } else {
-            errorMessage += err.message || 'Please try logging in again.';
+            errorMessage = 'Failed to load user profile. ' + (err.message || 'Please try logging in again.');
           }
           
           // If there's an error loading user data, sign out to prevent broken state
