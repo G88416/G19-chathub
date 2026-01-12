@@ -17,6 +17,7 @@ fi
 
 echo "╔════════════════════════════════════════════════════════════════════╗"
 echo "║  Firebase Security Rules Deployment - G19-ChatHub                  ║"
+echo "║  🔧 Includes permission issue fixes                                ║"
 echo "╚════════════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -97,6 +98,11 @@ if firebase deploy --only firestore:rules,storage:rules; then
     echo "  ✓ Firestore security rules (firestore.rules)"
     echo "  ✓ Storage security rules (storage.rules)"
     echo ""
+    echo "🔧 Permission issues fixed:"
+    echo "  ✓ Removed cross-service Firestore queries from Storage rules"
+    echo "  ✓ Fixed email/phone validation for all auth methods"
+    echo "  ✓ Simplified group photo permissions"
+    echo ""
     echo "🔐 Security features now active:"
     echo "  ✓ Authentication required for all operations"
     echo "  ✓ User profile protection"
@@ -105,6 +111,8 @@ if firebase deploy --only firestore:rules,storage:rules; then
     echo "  ✓ Group chat permissions"
     echo ""
     echo "✨ Your app should now work without permission errors!"
+    echo ""
+    echo "📖 For details about the fixes, see: PERMISSION_FIX_GUIDE.md"
     echo ""
     echo "🧪 Test your deployment:"
     echo "  1. Open your app: https://g19-chathub.web.app"
