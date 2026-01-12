@@ -3,8 +3,35 @@
 ## Problem
 You're seeing **"Missing or insufficient permissions"** when trying to log in or use the chat app.
 
+**NEW**: The app now shows detailed error messages with deployment instructions when this error occurs!
+
 ## Root Cause
 The Firebase security rules haven't been deployed to your Firebase project. Without these rules, Firebase denies all database operations by default.
+
+## What You'll See Now
+
+When the error occurs, the app will display a detailed alert message like:
+
+```
+❌ PERMISSION ERROR: Firebase security rules not deployed!
+
+📋 To fix this issue:
+
+1. Open Firebase Console (https://console.firebase.google.com/)
+2. Select project: g19-chathub
+3. Go to Firestore Database → Rules
+4. Copy contents from firestore.rules file and paste
+5. Click "Publish"
+6. Go to Storage → Rules
+7. Copy contents from storage.rules file and paste
+8. Click "Publish"
+
+OR run: firebase deploy --only firestore:rules,storage:rules
+
+See QUICK_FIX_PERMISSIONS.md for detailed instructions.
+```
+
+This makes it much easier to identify and fix the issue!
 
 ## ✅ Solution (Choose One Method)
 

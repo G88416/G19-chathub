@@ -1224,8 +1224,20 @@
         // Start online status updates
         startOnlineStatusUpdates();
       } catch (err) {
+        logger.error('Error skipping profile setup:', err);
+        
         const errorEl = document.getElementById('profileSetupError');
-        errorEl.textContent = err.message;
+        let errorMessage = '';
+        
+        if (isPermissionError(err)) {
+          errorMessage = getPermissionErrorMessage();
+        } else if (err.code === 'unavailable') {
+          errorMessage = '❌ Network error. Please check your connection and try again.';
+        } else {
+          errorMessage = '❌ ' + err.message;
+        }
+        
+        errorEl.textContent = errorMessage;
         errorEl.style.display = 'block';
       }
     };
@@ -1365,6 +1377,35 @@
         debug: false   // Show debug messages (enable for detailed debugging)
       }
     };
+    
+    // Helper function to detect permission errors
+    // Checks for both lowercase and uppercase variants as some Firebase SDKs/errors may use different casing
+    function isPermissionError(err) {
+      return err.code === 'permission-denied' || 
+             err.code === 'PERMISSION_DENIED' ||
+             (err.message && err.message.toLowerCase().includes('permission'));
+    }
+    
+    // Helper function to generate permission error message for users
+    // Note: Project name 'g19-chathub' is specific to this project
+    function getPermissionErrorMessage() {
+      return `❌ PERMISSION ERROR: Firebase security rules not deployed!
+
+📋 To fix this issue:
+
+1. Open Firebase Console (https://console.firebase.google.com/)
+2. Select project: g19-chathub
+3. Go to Firestore Database → Rules
+4. Copy contents from firestore.rules file and paste
+5. Click "Publish"
+6. Go to Storage → Rules
+7. Copy contents from storage.rules file and paste
+8. Click "Publish"
+
+OR run: firebase deploy --only firestore:rules,storage:rules
+
+See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
+    }
 
     // Centralized logging utility
     // Usage: logger.error('message', ...args) or logger.warn('message', ...args)
@@ -1781,7 +1822,22 @@
         // Start online status updates
         startOnlineStatusUpdates();
       } catch (err) {
-        errorEl.textContent = '❌ ' + err.message;
+        logger.error('Error saving profile:', err);
+        
+        // Provide specific error messages for different error types
+        let errorMessage;
+        
+        if (isPermissionError(err)) {
+          errorMessage = getPermissionErrorMessage();
+        } else if (err.code === 'storage/unauthorized') {
+          errorMessage = '❌ Storage permission denied. Please deploy storage.rules to Firebase.';
+        } else if (err.code === 'unavailable') {
+          errorMessage = '❌ Network error. Please check your connection and try again.';
+        } else {
+          errorMessage = '❌ ' + err.message;
+        }
+        
+        errorEl.textContent = errorMessage;
         errorEl.style.display = 'block';
         
         // Reset button state
@@ -2183,21 +2239,40 @@
           
           document.getElementById('auth').classList.add('d-none');
           document.getElementById('chat').classList.remove('d-none');
-          const emailLower = user.email ? user.email.toLowerCase().trim() : null;
-          await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
-            emailLower: emailLower,
-            phone: user.phoneNumber,
-            online: true,
-            lastSeen: serverTimestamp()
-          }, { merge: true });
+          
+          // Only update user status if profile already exists and has required fields
+          // userData is defined above at line 2231, so this check is safe
+          // This prevents unnecessary Firestore writes during profile setup
+          if (userDoc.exists() && userData?.name) {
+            const emailLower = user.email ? user.email.toLowerCase().trim() : null;
+            await setDoc(doc(db, 'users', user.uid), {
+              email: user.email,
+              emailLower: emailLower,
+              phone: user.phoneNumber,
+              online: true,
+              lastSeen: serverTimestamp()
+            }, { merge: true });
+          }
+          
           // Start online status updates
           startOnlineStatusUpdates();
         } catch (err) {
           logger.error('Error during authentication state change:', err);
+          
+          // Provide specific error messages for permission issues
+          let errorMessage;
+          
+          if (isPermissionError(err)) {
+            errorMessage = getPermissionErrorMessage();
+          } else if (err.code === 'unavailable') {
+            errorMessage = 'Failed to load user profile. Network error. Please check your connection.';
+          } else {
+            errorMessage = 'Failed to load user profile. ' + (err.message || 'Please try logging in again.');
+          }
+          
           // If there's an error loading user data, sign out to prevent broken state
           await signOut(auth);
-          alert('Failed to load user profile. Please try logging in again.');
+          alert(errorMessage);
         }
       } else {
         currentUser = null;
