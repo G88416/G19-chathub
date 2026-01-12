@@ -1,5 +1,33 @@
 # 🔧 QUICK FIX: "Missing or insufficient permissions" Error
 
+## 🆕 Updated Fix (January 2026)
+
+**Good news!** The permission issues have been identified and fixed in the latest rules update.
+
+### What Was Fixed
+
+1. ✅ **Removed cross-service Firestore queries** from Storage rules
+2. ✅ **Fixed email/phone validation** to work with all authentication methods
+3. ✅ **Simplified group photo permissions** to prevent circular dependencies
+
+### Quick Deploy
+
+Run this command to deploy the fixed rules:
+
+```bash
+./deploy-rules.sh
+```
+
+Or use Firebase CLI directly:
+
+```bash
+firebase deploy --only firestore:rules,storage:rules
+```
+
+📖 **For detailed information about the fixes, see: [PERMISSION_FIX_GUIDE.md](PERMISSION_FIX_GUIDE.md)**
+
+---
+
 ## Problem
 You're seeing **"Missing or insufficient permissions"** when trying to log in or use the chat app.
 

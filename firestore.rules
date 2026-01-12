@@ -12,14 +12,20 @@ service cloud.firestore {
     
     // Validate that the email being set/updated matches the authenticated email
     // This avoids get() operations and works for both create and update operations
+    // Returns true if: auth has no email, OR email matches auth email
     function isEmailMatchingAuth(email) {
-      return request.auth.token.email == null || email == request.auth.token.email;
+      return !('email' in request.auth.token) 
+        || request.auth.token.email == null 
+        || email == request.auth.token.email;
     }
     
     // Validate that the phone being set/updated matches the authenticated phone
     // This avoids get() operations and works for both create and update operations
+    // Returns true if: auth has no phone, OR phone matches auth phone
     function isPhoneMatchingAuth(phone) {
-      return request.auth.token.phone_number == null || phone == request.auth.token.phone_number;
+      return !('phone_number' in request.auth.token) 
+        || request.auth.token.phone_number == null 
+        || phone == request.auth.token.phone_number;
     }
     
     // Check if email field is being set or updated correctly

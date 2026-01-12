@@ -6,19 +6,26 @@ A real-time chat application with WhatsApp-inspired UI, built with Firebase and 
 
 **If you're getting "Missing or insufficient permissions" errors**, you need to deploy the Firebase security rules first!
 
-### Quick Fix (2 minutes):
+### 🆕 Updated Rules (January 2026)
+
+The rules have been updated to fix permission issues. Deploy them using:
+
 ```bash
-# Install Firebase CLI
-npm install -g firebase-tools
+./deploy-rules.sh
+```
 
-# Login
-firebase login
+Or manually:
 
-# Deploy the rules
+```bash
 firebase deploy --only firestore:rules,storage:rules
 ```
 
-**OR** see the complete guide: [QUICK_FIX_PERMISSIONS.md](QUICK_FIX_PERMISSIONS.md)
+### What's Fixed:
+- ✅ Removed cross-service Firestore queries from Storage rules
+- ✅ Fixed email/phone validation for all authentication methods
+- ✅ Simplified group photo permissions
+
+📖 **See detailed guide**: [DEPLOY_UPDATED_RULES.md](DEPLOY_UPDATED_RULES.md)
 
 ---
 
