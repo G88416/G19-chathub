@@ -130,6 +130,37 @@ service cloud.firestore {
       
       // DELETE: Profile deletion is not allowed to maintain chat history integrity
       // If deletion is needed, it should be handled by Firebase Admin SDK
+      
+      // ========== RECENT CHATS SUBCOLLECTION ==========
+      // Stores user's recent conversation partners for quick access
+      match /recentChats/{partnerId} {
+        // Users can read, write, and delete their own recent chats
+        allow read, write, delete: if isOwner(userId);
+      }
+    }
+    
+    // ========== STATUS COLLECTION ==========
+    // Stores WhatsApp-like status updates (24-hour expiring media)
+    match /status/{statusId} {
+      // READ: Anyone authenticated can read statuses
+      // This allows users to see their friends' statuses
+      allow read: if isSignedIn();
+      
+      // CREATE: Users can create their own status
+      // Required fields: userId, mediaURL, mediaType, timestamp, expiresAt
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'mediaURL', 'mediaType', 'timestamp', 'expiresAt']);
+      
+      // UPDATE: Users can update their own status (e.g., add views)
+      // Also allow others to add themselves to the views array
+      allow update: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid
+        || (request.resource.data.views is list && request.auth.uid in request.resource.data.views)
+      );
+      
+      // DELETE: Users can delete their own status
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
     
     // ========== GROUPS COLLECTION ==========
