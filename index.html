@@ -2327,6 +2327,11 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         try {
           // Check if user has completed profile setup
           const userDoc = await getDoc(doc(db, 'users', user.uid));
+          
+          // If document doesn't exist, show profile setup
+          // This can happen when:
+          // 1. User signed up but didn't complete profile
+          // 2. User's profile was deleted
           if (!userDoc.exists() || !userDoc.data()?.name) {
             // Show profile setup modal for new users or users without name
             // Hide auth container so user doesn't see login form behind modal
@@ -2365,11 +2370,57 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         } catch (err) {
           logger.error('Error during authentication state change:', err);
           
-          // Provide specific error messages for permission issues
+          // Enhanced error detection and handling
           let errorMessage;
+          let shouldShowBanner = false;
           
+          // Check if this is a genuine permission error (rules not deployed)
+          // vs. a missing document error (profile not created)
           if (isPermissionError(err)) {
-            errorMessage = getPermissionErrorMessage();
+            // For permission errors during getDoc, check if it's due to missing rules
+            // or just a missing document. If the error is permission-denied on read,
+            // it's likely that rules aren't deployed OR the document doesn't exist.
+            // We can't distinguish between these cases reliably, so we'll:
+            // 1. Try to create a minimal profile document
+            // 2. If that fails with permission error, rules aren't deployed
+            // 3. If that succeeds, it was just a missing document
+            
+            try {
+              // Attempt to create minimal profile - if this works, rules ARE deployed
+              const emailLower = user.email ? user.email.toLowerCase().trim() : null;
+              const defaultName = user.email ? user.email.split('@')[0] : 'User';
+              
+              await setDoc(doc(db, 'users', user.uid), {
+                email: user.email,
+                emailLower: emailLower,
+                name: defaultName,
+                about: 'Hey there! I am using ChatHub',
+                photoURL: null,
+                online: true,
+                lastSeen: serverTimestamp(),
+                settings: {
+                  notifications: true
+                }
+              });
+              
+              // Success! Rules are deployed, document was just missing.
+              // Show profile setup so user can customize their profile
+              logger.info('Created minimal profile for user. Showing profile setup.');
+              document.getElementById('auth').classList.add('d-none');
+              window.showProfileSetup();
+              return;
+            } catch (createErr) {
+              // If we get permission error here, rules are definitely not deployed
+              if (isPermissionError(createErr)) {
+                logger.error('Permission error when creating profile. Rules not deployed:', createErr);
+                errorMessage = getPermissionErrorMessage();
+                shouldShowBanner = true;
+              } else {
+                // Some other error during profile creation
+                logger.error('Error creating minimal profile:', createErr);
+                errorMessage = 'Failed to create user profile. ' + (createErr.message || 'Please try again.');
+              }
+            }
           } else if (err.code === 'unavailable') {
             errorMessage = 'Failed to load user profile. Network error. Please check your connection.';
           } else {
@@ -2378,6 +2429,11 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           
           // If there's an error loading user data, sign out to prevent broken state
           await signOut(auth);
+          
+          // Show appropriate error message
+          if (shouldShowBanner) {
+            // Banner is already shown by getPermissionErrorMessage()
+          }
           alert(errorMessage);
         }
       } else {
