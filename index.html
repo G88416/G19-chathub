@@ -1990,225 +1990,75 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       }
     };
 
+    // Login with email or username
     window.login = async () => {
-      let emailOrUsername = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const useUsername = document.getElementById('useUsername').checked;
-      const loginBtn = document.getElementById('loginBtn');
-      const authError = document.getElementById('authError');
-      const authSuccess = document.getElementById('authSuccess');
+        let emailOrUsername = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const useUsername = document.getElementById('useUsername').checked;
 
-      authError.style.display = 'none';
-      authSuccess.style.display = 'none';
-
-      // Enhanced validation
-      if (!emailOrUsername || !password) {
-        authError.textContent = 'Please enter email/username and password';
-        authError.style.display = 'block';
-        return;
-      }
-
-      // Validate email format if not using username
-      if (!useUsername && !ValidationUtils.isValidEmail(emailOrUsername)) {
-        authError.textContent = 'Please enter a valid email address';
-        authError.style.display = 'block';
-        return;
-      }
-
-      try {
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Logging in...';
-        
-        let email = emailOrUsername;
-
-        if (useUsername) {
-          // Sanitize and lookup email by username (case-insensitive)
-          const sanitizedUsername = ValidationUtils.sanitizeText(emailOrUsername.toLowerCase());
-          const q = query(collection(db, 'users'), where('username', '==', sanitizedUsername));
-          const snap = await getDocs(q);
-          if (snap.empty) {
-            authError.textContent = 'Username not found';
-            authError.style.display = 'block';
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Login';
+        if (!emailOrUsername || !password) {
+            alert('Please enter email/username and password');
             return;
-          }
-          
-          const userData = snap.docs[0]?.data();
-          if (!userData || !userData.email) {
-            authError.textContent = 'Account not found or missing email address';
-            authError.style.display = 'block';
-            loginBtn.disabled = false;
-            loginBtn.textContent = 'Login';
-            return;
-          }
-          email = userData.email;
-        } else {
-          // Lookup email in Firestore using case-insensitive emailLower field
-          // This ensures we use the exact email that was registered
-          const emailLower = emailOrUsername.toLowerCase();
-          const q = query(collection(db, 'users'), where('emailLower', '==', emailLower));
-          const snap = await getDocs(q);
-          
-          if (!snap.empty) {
-            // Found user in database, use their exact registered email
-            // Note: emailLower should be unique per user, so we use the first match
-            const userData = snap.docs[0]?.data();
-            if (!userData || !userData.email) {
-              authError.textContent = 'Account found but missing email address';
-              authError.style.display = 'block';
-              loginBtn.disabled = false;
-              loginBtn.textContent = 'Login';
-              return;
+        }
+
+        try {
+            let email = emailOrUsername;
+
+            if (useUsername) {
+                // Lookup email by username (case-insensitive)
+                const q = query(collection(db, 'users'), where('username', '==', emailOrUsername.toLowerCase()));
+                const snap = await getDocs(q);
+                
+                if (snap.empty) {
+                    alert('Username not found');
+                    return;
+                }
+                
+                const userData = snap.docs[0]?.data();
+                if (!userData || !userData.email) {
+                    alert('Account not found or missing email address');
+                    return;
+                }
+                
+                email = userData.email;
             }
-            email = userData.email;
-          }
-          // If not found in Firestore, proceed with the input as-is
-          // This maintains backward compatibility for users who registered before emailLower was added
-        }
 
-        await signInWithEmailAndPassword(auth, email, password);
-        authSuccess.textContent = 'Login successful! Loading chat...';
-        authSuccess.style.display = 'block';
-      } catch (err) {
-        let errorMessage = err.message;
-        
-        // Check for permission errors and handle specially
-        if (isPermissionError(err)) {
-          // Use hardcoded safe HTML for permission errors (no user/external input)
-          authError.innerHTML = `
-            <div style="background: rgba(217, 83, 79, 0.1); border: 2px solid #d9534f; border-radius: 8px; padding: 15px; margin-top: 15px;">
-              <strong style="font-size: 1.1rem;">⚠️ FIREBASE RULES NOT DEPLOYED</strong><br><br>
-              <div style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
-                The app cannot function without Firebase security rules.<br><br>
-                <strong>Quick Fix Options:</strong><br>
-                1️⃣ Run: <code style="background: #2a3942; padding: 2px 8px; border-radius: 4px;">firebase deploy --only firestore:rules,storage:rules</code><br>
-                2️⃣ Or use Firebase Console to deploy rules manually<br>
-                3️⃣ See <strong>QUICK_FIX_PERMISSIONS.md</strong> for details
-              </div>
-            </div>
-          `;
-          authError.style.display = 'block';
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Login';
-          return;
+            await signInWithEmailAndPassword(auth, email, password);
+            // → onAuthStateChanged will handle UI transition
+        } catch (err) {
+            alert(err.message);
         }
-        
-        if (err.code === 'auth/user-not-found') {
-          errorMessage = 'No account found with this email. Please sign up first.';
-        } else if (err.code === 'auth/wrong-password') {
-          errorMessage = 'Incorrect password. Please try again.';
-        } else if (err.code === 'auth/invalid-email') {
-          errorMessage = 'Invalid email address format.';
-        } else if (err.code === 'auth/invalid-credential') {
-          errorMessage = 'Invalid email or password. Please try again.';
-        } else if (err.code === 'auth/too-many-requests') {
-          errorMessage = 'Too many login attempts. Please try again later.';
-        } else if (err.code === 'auth/network-request-failed') {
-          errorMessage = 'Network error. Please check your connection and try again.';
-        }
-        // Use textContent for regular error messages to prevent XSS
-        authError.textContent = errorMessage;
-        authError.style.display = 'block';
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-      }
     };
 
     window.logout = () => signOut(auth);
 
+    // Login with phone number (Firebase Phone Auth)
     window.loginWithPhone = () => {
-      const phone = document.getElementById('phone').value.trim();
-      const phoneLoginBtn = document.getElementById('phoneLoginBtn');
-      const authError = document.getElementById('authError');
-      const authSuccess = document.getElementById('authSuccess');
-      
-      authError.style.display = 'none';
-      authSuccess.style.display = 'none';
-      
-      if (!phone) {
-        authError.textContent = 'Please enter phone number (e.g., +1234567890)';
-        authError.style.display = 'block';
-        return;
-      }
+        const phone = document.getElementById('phone').value.trim();
+        if (!phone) {
+            alert('Enter phone number');
+            return;
+        }
 
-      // Validate phone number format (must start with +)
-      if (!phone.startsWith('+')) {
-        authError.textContent = 'Phone number must include country code (e.g., +1234567890)';
-        authError.style.display = 'block';
-        return;
-      }
+        // Clean up previous verifier if exists
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
+        
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible'
+        });
 
-      // Sanitize phone input
-      const sanitizedPhone = ValidationUtils.sanitizeText(phone);
-
-      phoneLoginBtn.disabled = true;
-      phoneLoginBtn.textContent = 'Sending SMS...';
-
-      // Clean up existing verifier if present
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-      }
-      
-      try {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-        signInWithPhoneNumber(auth, sanitizedPhone, window.recaptchaVerifier)
-          .then(confirmationResult => {
-            phoneLoginBtn.disabled = false;
-            phoneLoginBtn.textContent = 'Login with Phone';
-            authSuccess.textContent = 'SMS code sent! Check your phone.';
-            authSuccess.style.display = 'block';
-            
-            const code = prompt('Enter the 6-digit SMS code:');
-            if (!code) {
-              authError.textContent = 'Login cancelled';
-              authError.style.display = 'block';
-              authSuccess.style.display = 'none';
-              return;
-            }
-            
-            // Validate code format
-            if (!SMS_CODE_PATTERN.test(code)) {
-              authError.textContent = 'Invalid code format. Please enter 6 digits.';
-              authError.style.display = 'block';
-              authSuccess.style.display = 'none';
-              return;
-            }
-            
-            phoneLoginBtn.disabled = true;
-            phoneLoginBtn.textContent = 'Verifying...';
-            
-            return confirmationResult.confirm(code);
-          })
-          .then(() => {
-            authSuccess.textContent = 'Phone login successful!';
-            authSuccess.style.display = 'block';
-            authError.style.display = 'none';
-          })
-          .catch(err => {
-            let errorMessage = err.message;
-            if (err.code === 'auth/invalid-phone-number') {
-              errorMessage = 'Invalid phone number format. Use international format (e.g., +1234567890)';
-            } else if (err.code === 'auth/invalid-verification-code') {
-              errorMessage = 'Invalid verification code. Please try again.';
-            } else if (err.code === 'auth/code-expired') {
-              errorMessage = 'Verification code expired. Please request a new code.';
-            } else if (err.code === 'auth/too-many-requests') {
-              errorMessage = 'Too many attempts. Please try again later.';
-            }
-            authError.textContent = errorMessage;
-            authError.style.display = 'block';
-            authSuccess.style.display = 'none';
-            phoneLoginBtn.disabled = false;
-            phoneLoginBtn.textContent = 'Login with Phone';
-          });
-      } catch (err) {
-        authError.textContent = err.message;
-        authError.style.display = 'block';
-        phoneLoginBtn.disabled = false;
-        phoneLoginBtn.textContent = 'Login with Phone';
-      }
+        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+            .then(confirmationResult => {
+                const code = prompt('Enter SMS code');
+                if (!code) return; // User cancelled
+                
+                return confirmationResult.confirm(code);
+            })
+            .catch(err => {
+                alert(err.message);
+            });
     };
 
     onAuthStateChanged(auth, async user => {
