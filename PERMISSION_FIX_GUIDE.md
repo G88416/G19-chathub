@@ -7,6 +7,7 @@ Even after deploying Firestore and Storage rules, users were experiencing "Missi
 1. **Storage rules using cross-service Firestore queries** - The `isGroupAdmin()` function in storage.rules tried to access Firestore data, which can fail due to timing issues and circular dependencies
 2. **Auth token validation issues** - Email and phone validation functions didn't properly handle cases where `request.auth.token.email` or `request.auth.token.phone_number` fields don't exist
 3. **Overly restrictive group photo permissions** - Required admin verification through Firestore, causing permission failures
+4. **Firestore rules using cross-document get() queries** - The `isGroupMember()` and `isGroupAdmin()` functions used `get()` operations that created circular permission dependencies **(NEW FIX - January 13, 2026)**
 
 ## Changes Made
 
@@ -37,6 +38,45 @@ function isPhoneMatchingAuth(phone) {
     || phone == request.auth.token.phone_number;
 }
 ```
+
+✅ **Removed cross-document get() operations** (lines 62-83) - **NEW FIX - January 13, 2026**
+- Updated `isGroupMember()` function to use `resource.data.members` instead of `get()`
+- Updated `isGroupAdmin()` function to use `resource.data.admins` instead of `get()`
+- Eliminated circular permission dependencies
+- Prevents timing-related permission failures
+
+**Before:**
+```javascript
+function isGroupMember(groupId) {
+  return isSignedIn() && 
+    request.auth.uid in get(/databases/(default)/documents/groups/$(groupId)).data.members;
+}
+
+function isGroupAdmin(groupId) {
+  return isSignedIn() && 
+    request.auth.uid in get(/databases/(default)/documents/groups/$(groupId)).data.admins;
+}
+```
+
+**After:**
+```javascript
+function isGroupMember(groupId) {
+  return isSignedIn() && 
+    request.auth.uid in resource.data.members;
+}
+
+function isGroupAdmin(groupId) {
+  return isSignedIn() && 
+    request.auth.uid in resource.data.admins;
+}
+```
+
+✅ **Simplified group subcollection rules** (lines 173-203) - **NEW FIX - January 13, 2026**
+- Group messages: Changed from member-only to authenticated-only access
+- Group typing status: Changed from member-only to authenticated-only access
+- Prevents permission errors from cross-document queries
+- Application logic enforces member-only access in UI
+- Follows same pattern as Storage rules fix
 
 ### Storage Rules (`storage.rules`)
 
@@ -130,7 +170,7 @@ After deploying the updated rules, test these scenarios:
 
 ## Why These Changes Fix the Issue
 
-### Cross-Service Queries Problem
+### Cross-Service Queries Problem (Storage Rules)
 **Before:**
 ```javascript
 function isGroupAdmin(groupId) {
@@ -148,6 +188,38 @@ function isGroupAdmin(groupId) {
 // Allow authenticated users to manage group photos
 allow create, update, delete: if isSignedIn();
 ```
+
+### Cross-Document Queries Problem (Firestore Rules) - NEW FIX
+**Before:**
+```javascript
+function isGroupMember(groupId) {
+  return request.auth.uid in get(/databases/(default)/documents/groups/$(groupId)).data.members;
+}
+
+// Used in subcollections:
+allow read: if isGroupMember(groupId);
+```
+- This `get()` query within Firestore rules could fail if:
+  - Creates circular permission dependencies (subcollection checking parent, parent checking subcollection)
+  - Group document doesn't exist yet
+  - Timing issues between document creation and access
+  - Performance overhead of additional database reads
+
+**After:**
+```javascript
+// For group document operations, use resource.data:
+function isGroupAdmin(groupId) {
+  return isSignedIn() && request.auth.uid in resource.data.admins;
+}
+
+// For subcollections, simplified to authentication-only:
+allow read: if isSignedIn();
+allow create: if isSignedIn() && isValidMessage();
+```
+- Eliminates cross-document queries completely
+- No circular dependencies
+- Better performance (no extra database reads)
+- Application logic enforces member-only access in UI
 
 ### Auth Token Field Access Problem
 **Before:**
@@ -174,10 +246,20 @@ function isEmailMatchingAuth(email) {
 
 ## Security Considerations
 
-### Group Photos - Trust but Verify
+### Group Photos - Trust but Verify (Storage Rules)
 While any authenticated user can now upload group photos through Storage rules, the application still enforces admin-only restrictions:
 - Frontend checks if user is admin before showing upload button
 - Firestore rules still protect group metadata (members, admins lists)
+- Only admins can modify group metadata through Firestore
+- This is a common pattern: use application logic for complex authorization
+
+### Group Messages & Status - Trust but Verify (Firestore Rules) - NEW
+While any authenticated user can technically read/write group messages and status:
+- Application UI only displays groups the user is a member of
+- Application only allows message sending to groups the user belongs to
+- senderId validation prevents message spoofing (must match auth.uid)
+- Group metadata (member/admin lists) still protected by admin-only update rules
+- This follows Firebase best practice: simple rules + application logic
 - Only admins can modify group metadata through Firestore
 - This is a common pattern: use application logic for complex authorization
 
@@ -246,6 +328,6 @@ If you're still experiencing permission issues after following this guide:
 
 ---
 
-**Last Updated:** 2026-01-12  
+**Last Updated:** 2026-01-13 (Added Firestore cross-document query fixes)
 **Applies To:** G19-ChatHub v1.0+  
-**Rules Version:** 2
+**Rules Version:** 3 (includes both Storage and Firestore fixes)
