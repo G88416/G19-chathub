@@ -954,6 +954,37 @@
       color: #00a884;
       font-size: 0.9rem;
     }
+    
+    /* Call control states */
+    .call-control-hidden {
+      display: none !important;
+    }
+    
+    .call-control-muted {
+      background: #d9534f !important;
+    }
+    
+    .call-control-active {
+      background: #2a3942 !important;
+    }
+    
+    /* In-app notification */
+    .notification-banner {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #00a884;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 2000;
+      animation: slideDown 0.3s ease;
+    }
+    
+    .notification-banner.hiding {
+      animation: slideUp 0.3s ease;
+    }
   </style>
 </head>
 <body>
@@ -1325,11 +1356,11 @@
         <button class="video-btn-start" onclick="startCall()" id="startCallBtn">
           <i class="bi bi-camera-video"></i> <span class="d-none d-md-inline">Start Call</span>
         </button>
-        <button class="auth-btn-secondary" onclick="toggleMuteAudio()" id="muteAudioBtn" style="display: none;">
-          <i class="bi bi-mic-mute" id="muteAudioIcon"></i> <span class="d-none d-md-inline">Mute</span>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleMuteAudio()" id="muteAudioBtn">
+          <i class="bi bi-mic" id="muteAudioIcon"></i> <span class="d-none d-md-inline">Mute</span>
         </button>
-        <button class="auth-btn-secondary" onclick="toggleVideo()" id="toggleVideoBtn" style="display: none;">
-          <i class="bi bi-camera-video-off" id="toggleVideoIcon"></i> <span class="d-none d-md-inline">Stop Video</span>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleVideo()" id="toggleVideoBtn">
+          <i class="bi bi-camera-video" id="toggleVideoIcon"></i> <span class="d-none d-md-inline">Stop Video</span>
         </button>
         <button class="video-btn-end" onclick="hangup()">
           <i class="bi bi-telephone-x"></i> <span class="d-none d-md-inline">End Call</span>
@@ -1356,8 +1387,8 @@
         <button class="video-btn-start" onclick="startAudioCall()" id="startAudioCallBtn">
           <i class="bi bi-telephone"></i> <span class="d-none d-md-inline">Start Call</span>
         </button>
-        <button class="auth-btn-secondary" onclick="toggleMuteAudioOnly()" id="muteAudioOnlyBtn" style="display: none;">
-          <i class="bi bi-mic-mute" id="muteAudioOnlyIcon"></i> <span class="d-none d-md-inline">Mute</span>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleMuteAudioOnly()" id="muteAudioOnlyBtn">
+          <i class="bi bi-mic" id="muteAudioOnlyIcon"></i> <span class="d-none d-md-inline">Mute</span>
         </button>
         <button class="video-btn-end" onclick="hangupAudio()">
           <i class="bi bi-telephone-x"></i> <span class="d-none d-md-inline">End Call</span>
@@ -1441,10 +1472,12 @@
         const btn = document.getElementById('muteAudioBtn');
         const icon = document.getElementById('muteAudioIcon');
         if (isAudioMuted) {
-          btn.style.background = '#d9534f';
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
           icon.className = 'bi bi-mic-mute-fill';
         } else {
-          btn.style.background = '#2a3942';
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
           icon.className = 'bi bi-mic';
         }
       }
@@ -1459,10 +1492,12 @@
         const btn = document.getElementById('toggleVideoBtn');
         const icon = document.getElementById('toggleVideoIcon');
         if (!isVideoEnabled) {
-          btn.style.background = '#d9534f';
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
           icon.className = 'bi bi-camera-video-off-fill';
         } else {
-          btn.style.background = '#2a3942';
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
           icon.className = 'bi bi-camera-video';
         }
       }
@@ -1477,10 +1512,12 @@
         const btn = document.getElementById('muteAudioOnlyBtn');
         const icon = document.getElementById('muteAudioOnlyIcon');
         if (isAudioOnlyMuted) {
-          btn.style.background = '#d9534f';
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
           icon.className = 'bi bi-mic-mute-fill';
         } else {
-          btn.style.background = '#2a3942';
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
           icon.className = 'bi bi-mic';
         }
       }
@@ -1735,9 +1772,16 @@
     const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
     const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
     const MAX_PROFILE_PHOTO_SIZE_MB = 5; // Maximum profile photo size in MB
+    const MAX_STATUS_SIZE_MB = 10; // Maximum status media size in MB
+    const STATUS_EXPIRY_HOURS = 24; // Status expiration time in hours
+    const STATUS_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // Status auto-refresh interval (5 minutes)
+    const STATUS_IMAGE_DURATION_MS = 5000; // Duration to show each status image (5 seconds)
+    const STATUS_PROGRESS_UPDATE_MS = 100; // How often to update status progress bar (100ms)
+    const RECENT_CHATS_LIMIT = 10; // Maximum number of recent chats to show
     const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
     const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
     const ERROR_HIDE_TIMEOUT = 3000; // Time to hide error messages (ms)
+    const NOTIFICATION_DURATION_MS = 2000; // Duration to show in-app notifications (2 seconds)
     const SMS_CODE_PATTERN = /^\d{6}$/; // Pattern for validating 6-digit SMS codes
 
     // Logging configuration
@@ -2401,9 +2445,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
 
       try {
         const file = mediaInput.files[0];
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = MAX_STATUS_SIZE_MB * 1024 * 1024;
         if (file.size > maxSize) {
-          throw new Error('File size must be less than 10MB');
+          throw new Error(`File size must be less than ${MAX_STATUS_SIZE_MB}MB`);
         }
 
         // Upload media
@@ -2418,7 +2462,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
 
         // Create status document with 24-hour expiry
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
+        expiresAt.setHours(expiresAt.getHours() + STATUS_EXPIRY_HOURS);
 
         await addDoc(collection(db, 'status'), {
           userId: currentUser.uid,
@@ -2590,16 +2634,17 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           // Auto-advance after 5 seconds
           const progressBar = progressContainer.children[index].querySelector('.status-progress-fill');
           let progress = 0;
+          const progressIncrement = (STATUS_PROGRESS_UPDATE_MS / STATUS_IMAGE_DURATION_MS) * 100;
           if (window.statusViewerInterval) clearInterval(window.statusViewerInterval);
           window.statusViewerInterval = setInterval(() => {
-            progress += 2;
+            progress += progressIncrement;
             progressBar.style.width = `${progress}%`;
             if (progress >= 100) {
               clearInterval(window.statusViewerInterval);
               currentIndex++;
               showStatus(currentIndex);
             }
-          }, 100);
+          }, STATUS_PROGRESS_UPDATE_MS);
         } else if (status.mediaType === 'video') {
           content.innerHTML = `
             <video src="${status.mediaURL}" controls autoplay onended="nextStatus()">
@@ -2686,7 +2731,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         const q = query(
           collection(db, 'users', currentUser.uid, 'recentChats'),
           orderBy('lastAccessed', 'desc'),
-          limit(10)
+          limit(RECENT_CHATS_LIMIT)
         );
 
         const snapshot = await getDocs(q);
@@ -2917,7 +2962,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           }
           window.statusRefreshInterval = setInterval(() => {
             loadAllStatuses();
-          }, 5 * 60 * 1000); // 5 minutes
+          }, STATUS_REFRESH_INTERVAL_MS);
         } catch (err) {
           logger.error('Error during authentication state change:', err);
           
@@ -3163,13 +3208,13 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
               } else {
                 // Show brief in-app notification
                 const notif = document.createElement('div');
-                notif.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #00a884; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 2000; animation: slideDown 0.3s ease;';
+                notif.className = 'notification-banner';
                 notif.textContent = 'New message received';
                 document.body.appendChild(notif);
                 setTimeout(() => {
-                  notif.style.animation = 'slideUp 0.3s ease';
+                  notif.classList.add('hiding');
                   setTimeout(() => notif.remove(), 300);
-                }, 2000);
+                }, NOTIFICATION_DURATION_MS);
               }
             }
           }
@@ -3633,9 +3678,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer, type: 'video' });
       
       // Show call controls
-      document.getElementById('startCallBtn').style.display = 'none';
-      document.getElementById('muteAudioBtn').style.display = 'flex';
-      document.getElementById('toggleVideoBtn').style.display = 'flex';
+      document.getElementById('startCallBtn').classList.add('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.remove('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.remove('call-control-hidden');
       
       onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
         if (snap.exists() && !pc.currentRemoteDescription) pc.setRemoteDescription(snap.data().answer);
@@ -3677,9 +3722,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       await setDoc(doc(db, 'chats', chatId, 'call', 'answer'), { answer });
       
       // Show call controls
-      document.getElementById('startCallBtn').style.display = 'none';
-      document.getElementById('muteAudioBtn').style.display = 'flex';
-      document.getElementById('toggleVideoBtn').style.display = 'flex';
+      document.getElementById('startCallBtn').classList.add('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.remove('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.remove('call-control-hidden');
       
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
         snap.docChanges().forEach(change => {
@@ -3696,9 +3741,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       localStream = cleaned.stream;
       
       // Hide call controls
-      document.getElementById('startCallBtn').style.display = 'flex';
-      document.getElementById('muteAudioBtn').style.display = 'none';
-      document.getElementById('toggleVideoBtn').style.display = 'none';
+      document.getElementById('startCallBtn').classList.remove('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.add('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.add('call-control-hidden');
       
       // Reset button states
       isAudioMuted = false;
@@ -3742,8 +3787,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         document.getElementById('audioCallStatus').textContent = 'Calling...';
         
         // Show call controls
-        document.getElementById('startAudioCallBtn').style.display = 'none';
-        document.getElementById('muteAudioOnlyBtn').style.display = 'flex';
+        document.getElementById('startAudioCallBtn').classList.add('call-control-hidden');
+        document.getElementById('muteAudioOnlyBtn').classList.remove('call-control-hidden');
         
         onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
           if (snap.exists() && !audioPC.currentRemoteDescription) {
@@ -3774,8 +3819,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       document.getElementById('audioCallStatus').textContent = 'Call ended';
       
       // Hide call controls
-      document.getElementById('startAudioCallBtn').style.display = 'flex';
-      document.getElementById('muteAudioOnlyBtn').style.display = 'none';
+      document.getElementById('startAudioCallBtn').classList.remove('call-control-hidden');
+      document.getElementById('muteAudioOnlyBtn').classList.add('call-control-hidden');
       
       // Reset button state
       isAudioOnlyMuted = false;
@@ -3830,8 +3875,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         document.getElementById('audioCallStatus').textContent = 'Call connected';
         
         // Show call controls
-        document.getElementById('startAudioCallBtn').style.display = 'none';
-        document.getElementById('muteAudioOnlyBtn').style.display = 'flex';
+        document.getElementById('startAudioCallBtn').classList.add('call-control-hidden');
+        document.getElementById('muteAudioOnlyBtn').classList.remove('call-control-hidden');
         
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
           snap.docChanges().forEach(change => {
