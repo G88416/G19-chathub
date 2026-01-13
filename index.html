@@ -1785,10 +1785,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         
         // Check for permission errors and handle specially
         if (isPermissionError(err)) {
-          errorMessage = 'FIREBASE RULES NOT DEPLOYED';
+          // Use hardcoded safe HTML for permission errors (no user/external input)
           authError.innerHTML = `
             <div style="background: rgba(217, 83, 79, 0.1); border: 2px solid #d9534f; border-radius: 8px; padding: 15px; margin-top: 15px;">
-              <strong style="font-size: 1.1rem;">⚠️ ${errorMessage}</strong><br><br>
+              <strong style="font-size: 1.1rem;">⚠️ FIREBASE RULES NOT DEPLOYED</strong><br><br>
               <div style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
                 The app cannot function without Firebase security rules.<br><br>
                 <strong>Quick Fix Options:</strong><br>
@@ -2184,10 +2184,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         
         // Check for permission errors and handle specially
         if (isPermissionError(err)) {
-          errorMessage = 'FIREBASE RULES NOT DEPLOYED';
+          // Use hardcoded safe HTML for permission errors (no user/external input)
           authError.innerHTML = `
             <div style="background: rgba(217, 83, 79, 0.1); border: 2px solid #d9534f; border-radius: 8px; padding: 15px; margin-top: 15px;">
-              <strong style="font-size: 1.1rem;">⚠️ ${errorMessage}</strong><br><br>
+              <strong style="font-size: 1.1rem;">⚠️ FIREBASE RULES NOT DEPLOYED</strong><br><br>
               <div style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
                 The app cannot function without Firebase security rules.<br><br>
                 <strong>Quick Fix Options:</strong><br>
