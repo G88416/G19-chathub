@@ -458,6 +458,23 @@
         width: 95%;
         padding: 15px;
       }
+      
+      /* Enhanced mobile call controls */
+      .video-controls button {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+        min-width: 48px;
+        min-height: 48px;
+      }
+      
+      #videoContainer {
+        flex-direction: column;
+        padding: 10px;
+      }
+      
+      #videoContainer video {
+        max-width: 100%;
+      }
     }
     
     /* Bootstrap display utilities */
@@ -720,6 +737,254 @@
     img.rounded:hover {
       transform: scale(1.02);
     }
+    
+    /* Status feature styles */
+    .status-ring {
+      border: 3px solid #00a884;
+      border-radius: 50%;
+      padding: 2px;
+      animation: pulse-ring 2s infinite;
+    }
+    
+    .status-ring.viewed {
+      border-color: #8696a0;
+      animation: none;
+    }
+    
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    
+    .status-preview {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      overflow: hidden;
+      cursor: pointer;
+      margin: 0 auto;
+    }
+    
+    .status-preview img, .status-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .status-container {
+      padding: 15px;
+      border-bottom: 1px solid #2a3942;
+    }
+    
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      color: #8696a0;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .status-list {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding: 10px 15px;
+      scrollbar-width: thin;
+      scrollbar-color: #2a3942 transparent;
+    }
+    
+    .status-list::-webkit-scrollbar {
+      height: 6px;
+    }
+    
+    .status-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .status-list::-webkit-scrollbar-thumb {
+      background: #2a3942;
+      border-radius: 3px;
+    }
+    
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 70px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .status-item:hover {
+      transform: scale(1.05);
+    }
+    
+    .status-item-name {
+      color: #e9edef;
+      font-size: 0.75rem;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70px;
+    }
+    
+    .status-viewer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    
+    .status-viewer.show {
+      display: flex;
+    }
+    
+    .status-viewer-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .status-viewer-content {
+      max-width: 600px;
+      max-height: 80vh;
+      position: relative;
+    }
+    
+    .status-viewer-content img, .status-viewer-content video {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+    }
+    
+    .status-viewer-text {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      color: white;
+      font-size: 1.2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+    
+    .status-viewer-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 11;
+    }
+    
+    .status-viewer-close:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .status-progress {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      z-index: 11;
+    }
+    
+    .status-progress-bar {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    
+    .status-progress-fill {
+      height: 100%;
+      background: white;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    
+    /* Recent chats section */
+    .recent-chats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      color: #8696a0;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #2a3942;
+    }
+    
+    .chat-item-pin {
+      color: #00a884;
+      font-size: 0.9rem;
+    }
+    
+    /* Call control states */
+    .call-control-hidden {
+      display: none !important;
+    }
+    
+    .call-control-muted {
+      background: #d9534f !important;
+    }
+    
+    .call-control-active {
+      background: #2a3942 !important;
+    }
+    
+    /* In-app notification */
+    .notification-banner {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #00a884;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 2000;
+      animation: slideDown 0.3s ease;
+    }
+    
+    .notification-banner.hiding {
+      animation: slideUp 0.3s ease;
+    }
   </style>
 </head>
 <body>
@@ -873,6 +1138,57 @@
     </div>
   </div>
 
+  <!-- Create Status Modal -->
+  <div id="createStatusModal" class="video-modal">
+    <div class="video-modal-content" style="max-width: 500px;">
+      <h4 style="color: #e9edef; margin-bottom: 20px;">
+        <i class="bi bi-camera"></i> Create Status
+      </h4>
+      <div style="text-align: center; margin-bottom: 25px;">
+        <div id="statusMediaPreview" style="width: 200px; height: 200px; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="document.getElementById('statusMediaInput').click()">
+          <i class="bi bi-camera-fill" style="font-size: 3rem; color: #8696a0;"></i>
+        </div>
+        <input type="file" id="statusMediaInput" accept="image/*,video/*" style="display: none;">
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 0;">
+          <i class="bi bi-info-circle"></i> Click to add image or video
+        </p>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="color: #e9edef; font-size: 0.9rem; display: block; margin-bottom: 8px;">
+          Caption (optional)
+        </label>
+        <textarea id="statusCaption" placeholder="Add a caption..." maxlength="200" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem; resize: vertical; min-height: 60px; line-height: 1.5;"></textarea>
+        <small style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 5px; text-align: right;">Status expires after 24 hours</small>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="auth-btn-primary" onclick="uploadStatus()" style="flex: 1;">
+          <i class="bi bi-upload"></i> Post Status
+        </button>
+        <button class="auth-btn-secondary" onclick="toggleCreateStatusModal()" style="flex: 1;">Cancel</button>
+      </div>
+      <p id="statusError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+      <p id="statusSuccess" style="color: #00a884; text-align: center; margin-top: 10px; display: none;"></p>
+    </div>
+  </div>
+
+  <!-- Status Viewer -->
+  <div id="statusViewer" class="status-viewer">
+    <button class="status-viewer-close" onclick="closeStatusViewer()">
+      <i class="bi bi-x"></i>
+    </button>
+    <div class="status-progress" id="statusProgress"></div>
+    <div class="status-viewer-header" id="statusViewerHeader">
+      <div class="chat-header-avatar" id="statusUserAvatar"></div>
+      <div>
+        <h6 style="color: white; margin: 0;" id="statusUserName"></h6>
+        <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 0.8rem;" id="statusTime"></p>
+      </div>
+    </div>
+    <div class="status-viewer-content" id="statusViewerContent">
+      <!-- Status media will be inserted here -->
+    </div>
+  </div>
+
   <!-- Connection Status Indicator -->
   <div id="connectionStatus" class="connection-status">
     <i class="bi bi-wifi-off"></i> Disconnected
@@ -890,6 +1206,9 @@
           <h5 style="margin: 0;">ChatHub</h5>
         </div>
         <div style="display: flex; gap: 15px;">
+          <button class="chat-input-btn" onclick="toggleCreateStatusModal()" title="Create Status">
+            <i class="bi bi-camera"></i>
+          </button>
           <button class="chat-input-btn" onclick="toggleCreateGroupModal()" title="Create Group">
             <i class="bi bi-people"></i>
           </button>
@@ -910,6 +1229,34 @@
         </div>
         <p id="searchStatus" style="color: #8696a0; font-size: 0.75rem; margin: 5px 10px 0; display: none;"></p>
       </div>
+      
+      <!-- Status Section -->
+      <div class="status-container">
+        <div class="status-header">
+          <span>Status</span>
+          <button class="chat-input-btn" onclick="toggleCreateStatusModal()" title="Add Status" style="padding: 4px; width: 28px; height: 28px; font-size: 0.9rem;">
+            <i class="bi bi-plus-circle"></i>
+          </button>
+        </div>
+        <div class="status-list" id="statusList">
+          <!-- My Status -->
+          <div class="status-item" onclick="viewMyStatus()">
+            <div class="status-preview">
+              <div id="myStatusAvatar" style="width: 100%; height: 100%; background: #2a3942; display: flex; align-items: center; justify-content: center; color: #00a884; font-size: 1.5rem; border-radius: 50%;">
+                <i class="bi bi-plus-circle"></i>
+              </div>
+            </div>
+            <div class="status-item-name">My Status</div>
+          </div>
+          <!-- Friend statuses will appear here -->
+        </div>
+      </div>
+      
+      <!-- Recent Chats Header -->
+      <div class="recent-chats-header">
+        <span>Chats</span>
+      </div>
+      
       <div class="chat-list" id="chatList">
         <!-- Recent chats will appear here -->
         <div class="chat-item active">
@@ -1006,11 +1353,17 @@
         <video id="remoteVideo" autoplay playsinline style="width: 100%; max-width: 350px;"></video>
       </div>
       <div class="video-controls">
-        <button class="video-btn-start" onclick="startCall()">
-          <i class="bi bi-camera-video"></i> Start Call
+        <button class="video-btn-start" onclick="startCall()" id="startCallBtn">
+          <i class="bi bi-camera-video"></i> <span class="d-none d-md-inline">Start Call</span>
+        </button>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleMuteAudio()" id="muteAudioBtn">
+          <i class="bi bi-mic" id="muteAudioIcon"></i> <span class="d-none d-md-inline">Mute</span>
+        </button>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleVideo()" id="toggleVideoBtn">
+          <i class="bi bi-camera-video" id="toggleVideoIcon"></i> <span class="d-none d-md-inline">Stop Video</span>
         </button>
         <button class="video-btn-end" onclick="hangup()">
-          <i class="bi bi-telephone-x"></i> End Call
+          <i class="bi bi-telephone-x"></i> <span class="d-none d-md-inline">End Call</span>
         </button>
         <button class="auth-btn-secondary" onclick="toggleVideoModal()">
           Close
@@ -1031,11 +1384,14 @@
         <audio id="remoteAudio" autoplay></audio>
       </div>
       <div class="video-controls">
-        <button class="video-btn-start" onclick="startAudioCall()">
-          <i class="bi bi-telephone"></i> Start Call
+        <button class="video-btn-start" onclick="startAudioCall()" id="startAudioCallBtn">
+          <i class="bi bi-telephone"></i> <span class="d-none d-md-inline">Start Call</span>
+        </button>
+        <button class="auth-btn-secondary call-control-hidden" onclick="toggleMuteAudioOnly()" id="muteAudioOnlyBtn">
+          <i class="bi bi-mic" id="muteAudioOnlyIcon"></i> <span class="d-none d-md-inline">Mute</span>
         </button>
         <button class="video-btn-end" onclick="hangupAudio()">
-          <i class="bi bi-telephone-x"></i> End Call
+          <i class="bi bi-telephone-x"></i> <span class="d-none d-md-inline">End Call</span>
         </button>
         <button class="auth-btn-secondary" onclick="toggleAudioCallModal()">
           Close
@@ -1081,6 +1437,90 @@
       const chatMain = document.querySelector('.chat-main');
       sidebar.classList.toggle('show-mobile');
       chatMain.classList.toggle('hide-mobile');
+    };
+
+    // Status functions
+    window.toggleCreateStatusModal = function() {
+      document.getElementById('createStatusModal').classList.toggle('show');
+    };
+
+    window.closeStatusViewer = function() {
+      document.getElementById('statusViewer').classList.remove('show');
+      if (window.statusViewerInterval) {
+        clearInterval(window.statusViewerInterval);
+      }
+    };
+
+    window.viewMyStatus = function() {
+      // Load and view user's own status
+      if (window.currentUser) {
+        loadUserStatuses(window.currentUser.uid, true);
+      }
+    };
+
+    // Enhanced video call controls
+    let isAudioMuted = false;
+    let isVideoEnabled = true;
+    let isAudioOnlyMuted = false;
+
+    window.toggleMuteAudio = function() {
+      if (!localStream) return;
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        isAudioMuted = !isAudioMuted;
+        audioTrack.enabled = !isAudioMuted;
+        const btn = document.getElementById('muteAudioBtn');
+        const icon = document.getElementById('muteAudioIcon');
+        if (isAudioMuted) {
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
+          icon.className = 'bi bi-mic-mute-fill';
+        } else {
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
+          icon.className = 'bi bi-mic';
+        }
+      }
+    };
+
+    window.toggleVideo = function() {
+      if (!localStream) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        isVideoEnabled = !isVideoEnabled;
+        videoTrack.enabled = !isVideoEnabled;
+        const btn = document.getElementById('toggleVideoBtn');
+        const icon = document.getElementById('toggleVideoIcon');
+        if (!isVideoEnabled) {
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
+          icon.className = 'bi bi-camera-video-off-fill';
+        } else {
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
+          icon.className = 'bi bi-camera-video';
+        }
+      }
+    };
+
+    window.toggleMuteAudioOnly = function() {
+      if (!audioLocalStream) return;
+      const audioTrack = audioLocalStream.getAudioTracks()[0];
+      if (audioTrack) {
+        isAudioOnlyMuted = !isAudioOnlyMuted;
+        audioTrack.enabled = !isAudioOnlyMuted;
+        const btn = document.getElementById('muteAudioOnlyBtn');
+        const icon = document.getElementById('muteAudioOnlyIcon');
+        if (isAudioOnlyMuted) {
+          btn.classList.add('call-control-muted');
+          btn.classList.remove('call-control-active');
+          icon.className = 'bi bi-mic-mute-fill';
+        } else {
+          btn.classList.add('call-control-active');
+          btn.classList.remove('call-control-muted');
+          icon.className = 'bi bi-mic';
+        }
+      }
     };
 
     // Update chat header with partner info
@@ -1282,6 +1722,25 @@
           }
         });
       }
+
+      const statusMediaInput = document.getElementById('statusMediaInput');
+      if (statusMediaInput) {
+        statusMediaInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const preview = document.getElementById('statusMediaPreview');
+              if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+              } else if (file.type.startsWith('video/')) {
+                preview.innerHTML = `<video src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;" controls></video>`;
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
     });
   </script>
 
@@ -1289,7 +1748,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
-             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc } 
+             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc, arrayUnion } 
       from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -1313,9 +1772,16 @@
     const MAX_FILE_SIZE_MB = 10; // Maximum file size in MB
     const MAX_VOICE_SIZE_MB = 5; // Maximum voice message size in MB
     const MAX_PROFILE_PHOTO_SIZE_MB = 5; // Maximum profile photo size in MB
+    const MAX_STATUS_SIZE_MB = 10; // Maximum status media size in MB
+    const STATUS_EXPIRY_HOURS = 24; // Status expiration time in hours
+    const STATUS_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // Status auto-refresh interval (5 minutes)
+    const STATUS_IMAGE_DURATION_MS = 5000; // Duration to show each status image (5 seconds)
+    const STATUS_PROGRESS_UPDATE_MS = 100; // How often to update status progress bar (100ms)
+    const RECENT_CHATS_LIMIT = 10; // Maximum number of recent chats to show
     const SCROLL_THRESHOLD = 150; // Distance from bottom to trigger auto-scroll (px)
     const SCROLL_BUTTON_THRESHOLD = 100; // Distance from bottom to show scroll button (px)
     const ERROR_HIDE_TIMEOUT = 3000; // Time to hide error messages (ms)
+    const NOTIFICATION_DURATION_MS = 2000; // Duration to show in-app notifications (2 seconds)
     const SMS_CODE_PATTERN = /^\d{6}$/; // Pattern for validating 6-digit SMS codes
 
     // Logging configuration
@@ -1961,6 +2427,385 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       }
     };
 
+    // Status Feature Functions
+    window.uploadStatus = async () => {
+      const caption = document.getElementById('statusCaption').value.trim();
+      const mediaInput = document.getElementById('statusMediaInput');
+      const errorEl = document.getElementById('statusError');
+      const successEl = document.getElementById('statusSuccess');
+      
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!mediaInput.files.length) {
+        errorEl.textContent = 'Please select an image or video';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const file = mediaInput.files[0];
+        const maxSize = MAX_STATUS_SIZE_MB * 1024 * 1024;
+        if (file.size > maxSize) {
+          throw new Error(`File size must be less than ${MAX_STATUS_SIZE_MB}MB`);
+        }
+
+        // Upload media
+        const path = `status/${currentUser.uid}/${Date.now()}_${file.name}`;
+        const sref = storageRef(storage, path);
+        await uploadBytes(sref, file);
+        const mediaURL = await getDownloadURL(sref);
+
+        // Get user data for status
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const userData = userDoc.data();
+
+        // Create status document with 24-hour expiry
+        // NOTE: Using client-side timestamp for expiry. This may lead to slight
+        // inconsistencies due to client clock differences. For production, consider
+        // using a Cloud Function to set expiry based on server timestamp.
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + STATUS_EXPIRY_HOURS);
+
+        await addDoc(collection(db, 'status'), {
+          userId: currentUser.uid,
+          userName: userData?.name || 'Unknown',
+          userPhoto: userData?.photoURL || null,
+          mediaURL: mediaURL,
+          mediaType: file.type.startsWith('image/') ? 'image' : 'video',
+          caption: caption,
+          timestamp: serverTimestamp(),
+          expiresAt: expiresAt,
+          views: []
+        });
+
+        successEl.textContent = 'Status posted successfully!';
+        successEl.style.display = 'block';
+
+        // Clear form
+        document.getElementById('statusCaption').value = '';
+        mediaInput.value = '';
+        document.getElementById('statusMediaPreview').innerHTML = '<i class="bi bi-camera-fill" style="font-size: 3rem; color: #8696a0;"></i>';
+
+        setTimeout(() => {
+          window.toggleCreateStatusModal();
+          successEl.style.display = 'none';
+          loadAllStatuses(); // Refresh status list
+        }, 1500);
+      } catch (err) {
+        logger.error('Error uploading status:', err);
+        errorEl.textContent = err.message || 'Failed to upload status';
+        errorEl.style.display = 'block';
+      }
+    };
+
+    // Load all statuses from contacts
+    async function loadAllStatuses() {
+      if (!currentUser) return;
+
+      try {
+        // Get all statuses that haven't expired
+        const now = new Date();
+        const q = query(
+          collection(db, 'status'),
+          where('expiresAt', '>', now),
+          orderBy('expiresAt'),
+          orderBy('timestamp', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        const statusList = document.getElementById('statusList');
+        
+        // Clear existing statuses except "My Status"
+        const myStatusItem = statusList.querySelector('.status-item');
+        statusList.innerHTML = '';
+        if (myStatusItem) {
+          statusList.appendChild(myStatusItem);
+        }
+
+        // Group statuses by user
+        const userStatuses = new Map();
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const userId = data.userId;
+          if (!userStatuses.has(userId)) {
+            userStatuses.set(userId, []);
+          }
+          userStatuses.get(userId).push({ id: doc.id, ...data });
+        });
+
+        // Display status for each user
+        userStatuses.forEach((statuses, userId) => {
+          if (userId === currentUser.uid) {
+            // Update my status display
+            const myStatusAvatar = document.getElementById('myStatusAvatar');
+            const latestStatus = statuses[0];
+            if (latestStatus.mediaType === 'image') {
+              myStatusAvatar.innerHTML = `<img src="${latestStatus.mediaURL}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+              myStatusAvatar.parentElement.classList.add('status-ring');
+            }
+            myStatusAvatar.parentElement.onclick = () => viewUserStatuses(userId, statuses);
+          } else {
+            // Add friend status
+            const latestStatus = statuses[0];
+            const hasViewed = latestStatus.views?.includes(currentUser.uid);
+            
+            const statusItem = document.createElement('div');
+            statusItem.className = 'status-item';
+            statusItem.onclick = () => viewUserStatuses(userId, statuses);
+            
+            const statusPreview = document.createElement('div');
+            statusPreview.className = `status-preview ${hasViewed ? '' : 'status-ring'}`;
+            
+            if (latestStatus.userPhoto) {
+              statusPreview.innerHTML = `<img src="${latestStatus.userPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            } else {
+              statusPreview.innerHTML = `<div style="width: 100%; height: 100%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.5rem; border-radius: 50%;">${latestStatus.userName.charAt(0).toUpperCase()}</div>`;
+            }
+            
+            const statusName = document.createElement('div');
+            statusName.className = 'status-item-name';
+            statusName.textContent = latestStatus.userName;
+            
+            statusItem.appendChild(statusPreview);
+            statusItem.appendChild(statusName);
+            statusList.appendChild(statusItem);
+          }
+        });
+      } catch (err) {
+        logger.error('Error loading statuses:', err);
+      }
+    }
+
+    // View statuses for a specific user
+    async function viewUserStatuses(userId, statuses) {
+      const viewer = document.getElementById('statusViewer');
+      const content = document.getElementById('statusViewerContent');
+      const userAvatar = document.getElementById('statusUserAvatar');
+      const userName = document.getElementById('statusUserName');
+      const statusTime = document.getElementById('statusTime');
+      const progressContainer = document.getElementById('statusProgress');
+
+      let currentIndex = 0;
+
+      function showStatus(index) {
+        if (index >= statuses.length) {
+          window.closeStatusViewer();
+          return;
+        }
+
+        const status = statuses[index];
+        
+        // Update header
+        if (status.userPhoto) {
+          userAvatar.innerHTML = `<img src="${status.userPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+          userAvatar.innerHTML = status.userName.charAt(0).toUpperCase();
+        }
+        userName.textContent = status.userName;
+        
+        if (status.timestamp?.toDate) {
+          const time = status.timestamp.toDate();
+          const now = new Date();
+          const diff = Math.floor((now - time) / 1000 / 60); // minutes
+          if (diff < 60) {
+            statusTime.textContent = `${diff}m ago`;
+          } else {
+            statusTime.textContent = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+        }
+
+        // Update progress bars
+        progressContainer.innerHTML = '';
+        statuses.forEach((_, i) => {
+          const bar = document.createElement('div');
+          bar.className = 'status-progress-bar';
+          const fill = document.createElement('div');
+          fill.className = 'status-progress-fill';
+          fill.style.width = i < index ? '100%' : i === index ? '0%' : '0%';
+          bar.appendChild(fill);
+          progressContainer.appendChild(bar);
+        });
+
+        // Display media
+        if (status.mediaType === 'image') {
+          content.innerHTML = `
+            <img src="${status.mediaURL}" alt="Status">
+            ${status.caption ? `<div class="status-viewer-text">${status.caption}</div>` : ''}
+          `;
+          
+          // Auto-advance after 5 seconds
+          const progressBar = progressContainer.children[index].querySelector('.status-progress-fill');
+          let progress = 0;
+          const progressIncrement = (STATUS_PROGRESS_UPDATE_MS / STATUS_IMAGE_DURATION_MS) * 100;
+          if (window.statusViewerInterval) clearInterval(window.statusViewerInterval);
+          window.statusViewerInterval = setInterval(() => {
+            progress += progressIncrement;
+            progressBar.style.width = `${progress}%`;
+            if (progress >= 100) {
+              clearInterval(window.statusViewerInterval);
+              currentIndex++;
+              showStatus(currentIndex);
+            }
+          }, STATUS_PROGRESS_UPDATE_MS);
+        } else if (status.mediaType === 'video') {
+          content.innerHTML = `
+            <video src="${status.mediaURL}" controls autoplay>
+            ${status.caption ? `<div class="status-viewer-text">${status.caption}</div>` : ''}
+          `;
+          
+          const video = content.querySelector('video');
+          video.onended = () => {
+            currentIndex++;
+            showStatus(currentIndex);
+          };
+        }
+
+        // Mark as viewed using arrayUnion for safe concurrent updates
+        if (userId !== currentUser.uid && !status.views?.includes(currentUser.uid)) {
+          const statusRef = doc(db, 'status', status.id);
+          setDoc(statusRef, {
+            views: arrayUnion(currentUser.uid)
+          }, { merge: true }).catch(err => logger.error('Error marking status as viewed:', err));
+        }
+      }
+
+      viewer.classList.add('show');
+      showStatus(0);
+
+      // Click to advance
+      content.onclick = () => {
+        if (window.statusViewerInterval) clearInterval(window.statusViewerInterval);
+        currentIndex++;
+        showStatus(currentIndex);
+      };
+    }
+
+    // Load statuses for a specific user (e.g., their own)
+    async function loadUserStatuses(userId, isMyStatus = false) {
+      try {
+        const now = new Date();
+        const q = query(
+          collection(db, 'status'),
+          where('userId', '==', userId),
+          where('expiresAt', '>', now),
+          orderBy('expiresAt'),
+          orderBy('timestamp', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        const statuses = [];
+        snapshot.forEach(doc => {
+          statuses.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (statuses.length > 0) {
+          viewUserStatuses(userId, statuses);
+        } else if (isMyStatus) {
+          // Show notification banner instead of alert
+          const notif = document.createElement('div');
+          notif.className = 'notification-banner';
+          notif.textContent = 'You have no active status. Create one!';
+          document.body.appendChild(notif);
+          setTimeout(() => {
+            notif.classList.add('hiding');
+            setTimeout(() => notif.remove(), 300);
+          }, NOTIFICATION_DURATION_MS);
+        }
+      } catch (err) {
+        logger.error('Error loading user statuses:', err);
+      }
+    }
+
+    // Recent Chats Management
+    async function saveRecentChat(partnerUserId, partnerData) {
+      if (!currentUser || !partnerUserId) return;
+
+      try {
+        const recentChatRef = doc(db, 'users', currentUser.uid, 'recentChats', partnerUserId);
+        await setDoc(recentChatRef, {
+          partnerId: partnerUserId,
+          partnerName: partnerData?.name || 'Unknown',
+          partnerPhoto: partnerData?.photoURL || null,
+          partnerEmail: partnerData?.email || null,
+          lastAccessed: serverTimestamp()
+        });
+      } catch (err) {
+        logger.error('Error saving recent chat:', err);
+      }
+    }
+
+    async function loadRecentChats() {
+      if (!currentUser) return;
+
+      try {
+        const q = query(
+          collection(db, 'users', currentUser.uid, 'recentChats'),
+          orderBy('lastAccessed', 'desc'),
+          limit(RECENT_CHATS_LIMIT)
+        );
+
+        const snapshot = await getDocs(q);
+        const chatList = document.getElementById('chatList');
+        chatList.innerHTML = '';
+
+        if (snapshot.empty) {
+          chatList.innerHTML = `
+            <div class="chat-item active">
+              <div class="chat-item-avatar" id="currentChatAvatar">
+                <i class="bi bi-person"></i>
+              </div>
+              <div class="chat-item-content">
+                <div class="chat-item-name" id="currentChatName">Start a chat</div>
+                <div class="chat-item-message">Enter email/username above and press Enter ↵</div>
+              </div>
+            </div>
+            <div style="padding: 15px; text-align: center; border-top: 1px solid #2a3942; margin-top: 10px;">
+              <p style="color: #8696a0; font-size: 0.8rem; margin: 0;">💡 <strong>Tip:</strong> Enter your friend's email, username, or phone number above to start chatting!</p>
+            </div>
+          `;
+          return;
+        }
+
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          const chatItem = document.createElement('div');
+          chatItem.className = 'chat-item';
+          chatItem.onclick = () => {
+            document.getElementById('partnerEmail').value = data.partnerEmail || data.partnerName;
+            window.startChat();
+          };
+
+          const avatar = document.createElement('div');
+          avatar.className = 'chat-item-avatar';
+          if (data.partnerPhoto) {
+            avatar.innerHTML = `<img src="${data.partnerPhoto}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+          } else {
+            avatar.textContent = (data.partnerName || 'U').charAt(0).toUpperCase();
+          }
+
+          const content = document.createElement('div');
+          content.className = 'chat-item-content';
+          
+          const name = document.createElement('div');
+          name.className = 'chat-item-name';
+          name.innerHTML = `${data.partnerName} <i class="bi bi-pin-angle chat-item-pin"></i>`;
+          
+          const message = document.createElement('div');
+          message.className = 'chat-item-message';
+          message.textContent = data.partnerEmail || 'Tap to open chat';
+
+          content.appendChild(name);
+          content.appendChild(message);
+          chatItem.appendChild(avatar);
+          chatItem.appendChild(content);
+          chatList.appendChild(chatItem);
+        });
+      } catch (err) {
+        logger.error('Error loading recent chats:', err);
+      }
+    }
+
     window.loadUserSettings = async () => {
       if (!currentUser) return;
       
@@ -2112,6 +2957,23 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           
           // Start online status updates
           startOnlineStatusUpdates();
+          
+          // Request notification permission
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
+          
+          // Load statuses and recent chats
+          loadAllStatuses();
+          loadRecentChats();
+          
+          // Refresh statuses every 5 minutes to show new ones and remove expired ones
+          if (window.statusRefreshInterval) {
+            clearInterval(window.statusRefreshInterval);
+          }
+          window.statusRefreshInterval = setInterval(() => {
+            loadAllStatuses();
+          }, STATUS_REFRESH_INTERVAL_MS);
         } catch (err) {
           logger.error('Error during authentication state change:', err);
           
@@ -2299,6 +3161,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         const photoURL = partnerData?.photoURL || null;
         updateChatHeader(displayName, photoURL, displayName);
         
+        // Save to recent chats
+        saveRecentChat(newPartnerId, partnerData);
+        
         loadMessages();
         listenForCalls();
         listenForAudioCalls();
@@ -2340,9 +3205,29 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
             const data = change.doc.data();
             displayMessage(data, change.doc.id);
             
-            // Play notification sound for new messages from others
-            if (data.senderId !== currentUser.uid && document.hidden) {
-              playNotificationSound();
+            // Play notification sound and show notification for new messages from others
+            if (data.senderId !== currentUser.uid) {
+              if (document.hidden) {
+                playNotificationSound();
+                // Show browser notification if supported
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  const messageText = data.type === 'text' ? ValidationUtils.sanitizeText(data.text) : 'Media message';
+                  new Notification('New message', {
+                    body: messageText,
+                    icon: '/favicon.ico'
+                  });
+                }
+              } else {
+                // Show brief in-app notification
+                const notif = document.createElement('div');
+                notif.className = 'notification-banner';
+                notif.textContent = 'New message received';
+                document.body.appendChild(notif);
+                setTimeout(() => {
+                  notif.classList.add('hiding');
+                  setTimeout(() => notif.remove(), 300);
+                }, NOTIFICATION_DURATION_MS);
+              }
             }
           }
         });
@@ -2803,6 +3688,12 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer, type: 'video' });
+      
+      // Show call controls
+      document.getElementById('startCallBtn').classList.add('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.remove('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.remove('call-control-hidden');
+      
       onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
         if (snap.exists() && !pc.currentRemoteDescription) pc.setRemoteDescription(snap.data().answer);
       });
@@ -2841,6 +3732,12 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await setDoc(doc(db, 'chats', chatId, 'call', 'answer'), { answer });
+      
+      // Show call controls
+      document.getElementById('startCallBtn').classList.add('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.remove('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.remove('call-control-hidden');
+      
       onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
@@ -2854,6 +3751,16 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       const cleaned = cleanupPeerConnection(pc, localStream, 'localVideo', 'remoteVideo');
       pc = cleaned.peerConnection;
       localStream = cleaned.stream;
+      
+      // Hide call controls
+      document.getElementById('startCallBtn').classList.remove('call-control-hidden');
+      document.getElementById('muteAudioBtn').classList.add('call-control-hidden');
+      document.getElementById('toggleVideoBtn').classList.add('call-control-hidden');
+      
+      // Reset button states
+      isAudioMuted = false;
+      isVideoEnabled = true;
+      
       if (chatId) {
         deleteDoc(doc(db, 'chats', chatId, 'call', 'offer')).catch(() => {});
         deleteDoc(doc(db, 'chats', chatId, 'call', 'answer')).catch(() => {});
@@ -2891,6 +3798,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         await setDoc(doc(db, 'chats', chatId, 'call', 'offer'), { offer, type: 'audio' });
         document.getElementById('audioCallStatus').textContent = 'Calling...';
         
+        // Show call controls
+        document.getElementById('startAudioCallBtn').classList.add('call-control-hidden');
+        document.getElementById('muteAudioOnlyBtn').classList.remove('call-control-hidden');
+        
         onSnapshot(doc(db, 'chats', chatId, 'call', 'answer'), snap => {
           if (snap.exists() && !audioPC.currentRemoteDescription) {
             audioPC.setRemoteDescription(snap.data().answer);
@@ -2918,6 +3829,14 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       audioLocalStream = cleaned.stream;
       document.getElementById('remoteAudio').srcObject = null;
       document.getElementById('audioCallStatus').textContent = 'Call ended';
+      
+      // Hide call controls
+      document.getElementById('startAudioCallBtn').classList.remove('call-control-hidden');
+      document.getElementById('muteAudioOnlyBtn').classList.add('call-control-hidden');
+      
+      // Reset button state
+      isAudioOnlyMuted = false;
+      
       if (chatId) {
         deleteDoc(doc(db, 'chats', chatId, 'call', 'offer')).catch(() => {});
         deleteDoc(doc(db, 'chats', chatId, 'call', 'answer')).catch(() => {});
@@ -2966,6 +3885,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         await audioPC.setLocalDescription(answer);
         await setDoc(doc(db, 'chats', chatId, 'call', 'answer'), { answer });
         document.getElementById('audioCallStatus').textContent = 'Call connected';
+        
+        // Show call controls
+        document.getElementById('startAudioCallBtn').classList.add('call-control-hidden');
+        document.getElementById('muteAudioOnlyBtn').classList.remove('call-control-hidden');
         
         onSnapshot(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), snap => {
           snap.docChanges().forEach(change => {
