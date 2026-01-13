@@ -2352,7 +2352,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           document.getElementById('chat').classList.remove('d-none');
           
           // Only update user status if profile already exists and has required fields
-          // userData is defined above at line 2344
+          // This check uses userData which was loaded from the document above
           // This prevents unnecessary Firestore writes during profile setup
           if (userDoc.exists() && userData?.name) {
             const emailLower = user.email ? user.email.toLowerCase().trim() : null;
@@ -2382,7 +2382,11 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
               const userEmail = user.email || null;
               const emailLower = userEmail ? userEmail.toLowerCase().trim() : null;
               // Use a unique default name for users without email (e.g., phone auth)
-              const defaultName = userEmail ? userEmail.split('@')[0] : `User_${user.uid.slice(-6)}`;
+              // For email auth, extract username before @ symbol (with validation)
+              let defaultName = `User_${user.uid.slice(-6)}`;
+              if (userEmail && userEmail.includes('@')) {
+                defaultName = userEmail.split('@')[0];
+              }
               
               await setDoc(doc(db, 'users', user.uid), {
                 email: userEmail,
