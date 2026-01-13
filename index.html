@@ -745,7 +745,7 @@
       <p style="margin: 15px 0 0 0; font-size: 0.85rem;">
         <i class="bi bi-info-circle"></i> See <strong>QUICK_FIX_PERMISSIONS.md</strong> in the repository for detailed instructions
       </p>
-      <button onclick="dismissPermissionBanner()" style="margin-top: 15px; padding: 8px 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+      <button type="button" onclick="dismissPermissionBanner()" style="margin-top: 15px; padding: 8px 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
         Dismiss (I understand)
       </button>
     </div>
@@ -765,9 +765,9 @@
           <label for="useUsername">Login with username instead of email</label>
         </div>
         <div id="recaptcha-container"></div>
-        <button class="auth-btn-primary" id="signupBtn" onclick="signup()">Sign Up</button>
-        <button class="auth-btn-secondary" id="loginBtn" onclick="login()">Login</button>
-        <button class="auth-btn-secondary" id="phoneLoginBtn" onclick="loginWithPhone()">Login with Phone</button>
+        <button type="button" class="auth-btn-primary" id="signupBtn" onclick="signup()">Sign Up</button>
+        <button type="button" class="auth-btn-secondary" id="loginBtn" onclick="login()">Login</button>
+        <button type="button" class="auth-btn-secondary" id="phoneLoginBtn" onclick="loginWithPhone()">Login with Phone</button>
         <p id="authError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
         <p id="authSuccess" style="color: #00a884; text-align: center; margin-top: 10px; display: none;"></p>
       </div>
@@ -783,9 +783,9 @@
       </h4>
       <p style="color: #8696a0; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">Help your friends recognize you</p>
       <div style="text-align: center; margin-bottom: 25px;">
-        <div id="profilePhotoPreview" role="button" tabindex="0" aria-label="Upload profile photo" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
+        <button type="button" id="profilePhotoPreview" aria-label="Upload profile photo" style="width: 120px; height: 120px; border-radius: 50%; background: #2a3942; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: all 0.3s;" onclick="document.getElementById('profilePhotoInput').click()" onmouseover="this.style.borderColor='#00a884'" onmouseout="this.style.borderColor='transparent'">
           <i class="bi bi-camera-fill" style="font-size: 2rem; color: #8696a0;"></i>
-        </div>
+        </button>
         <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="handleProfilePhotoPreview(event)">
         <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 0; text-align: center;">
           <i class="bi bi-info-circle"></i> Click to add profile photo (optional)
@@ -806,13 +806,13 @@
         <small id="aboutCharCount" style="color: #8696a0; font-size: 0.75rem; display: block; margin-top: 5px; text-align: right;">0 / 139 characters</small>
       </div>
       <p id="profileSetupError" style="color: #d9534f; text-align: center; margin-bottom: 10px; display: none; background: rgba(217, 83, 79, 0.1); padding: 10px; border-radius: 6px;"></p>
-      <button class="auth-btn-primary" id="saveProfileBtn" onclick="saveProfile()" style="width: 100%; margin-bottom: 10px;">
+      <button type="button" class="auth-btn-primary" id="saveProfileBtn" onclick="saveProfile()" style="width: 100%; margin-bottom: 10px;">
         <span id="saveProfileBtnText">Save Profile</span>
         <span id="saveProfileBtnSpinner" style="display: none;">
           <i class="bi bi-hourglass-split"></i> Saving...
         </span>
       </button>
-      <button class="auth-btn-secondary" onclick="skipProfileSetup()" style="width: 100%;">
+      <button type="button" class="auth-btn-secondary" onclick="skipProfileSetup()" style="width: 100%;">
         Skip for now
       </button>
       <p style="color: #8696a0; font-size: 0.75rem; text-align: center; margin-top: 10px; font-style: italic;">
@@ -852,8 +852,8 @@
         </div>
       </div>
       <div style="display: flex; gap: 10px;">
-        <button class="auth-btn-primary" onclick="saveSettings()" style="flex: 1;">Save Changes</button>
-        <button class="auth-btn-secondary" onclick="toggleSettingsModal()" style="flex: 1;">Cancel</button>
+        <button type="button" class="auth-btn-primary" onclick="saveSettings()" style="flex: 1;">Save Changes</button>
+        <button type="button" class="auth-btn-secondary" onclick="toggleSettingsModal()" style="flex: 1;">Cancel</button>
       </div>
       <p id="settingsError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
       <p id="settingsSuccess" style="color: #00a884; text-align: center; margin-top: 10px; display: none;"></p>
@@ -894,8 +894,8 @@
         <input type="text" id="groupMembers" placeholder="Enter emails/usernames (comma-separated)" style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;">
       </div>
       <div style="display: flex; gap: 10px;">
-        <button class="auth-btn-primary" onclick="createGroup()" style="flex: 1;">Create Group</button>
-        <button class="auth-btn-secondary" onclick="toggleCreateGroupModal()" style="flex: 1;">Cancel</button>
+        <button type="button" class="auth-btn-primary" onclick="createGroup()" style="flex: 1;">Create Group</button>
+        <button type="button" class="auth-btn-secondary" onclick="toggleCreateGroupModal()" style="flex: 1;">Cancel</button>
       </div>
       <p id="groupError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
     </div>
@@ -918,13 +918,13 @@
           <h5 style="margin: 0;">ChatHub</h5>
         </div>
         <div style="display: flex; gap: 15px;">
-          <button class="chat-input-btn" onclick="toggleCreateGroupModal()" title="Create Group">
+          <button type="button" class="chat-input-btn" onclick="toggleCreateGroupModal()" title="Create Group" aria-label="Create Group">
             <i class="bi bi-people"></i>
           </button>
-          <button class="chat-input-btn" onclick="toggleSettingsModal()" title="Settings">
+          <button type="button" class="chat-input-btn" onclick="toggleSettingsModal()" title="Settings" aria-label="Settings">
             <i class="bi bi-gear"></i>
           </button>
-          <button class="chat-input-btn" onclick="logout()" title="Logout">
+          <button type="button" class="chat-input-btn" onclick="logout()" title="Logout" aria-label="Logout">
             <i class="bi bi-box-arrow-right"></i>
           </button>
         </div>
@@ -932,7 +932,7 @@
       <div class="sidebar-search">
         <div style="display: flex; gap: 5px; align-items: center;">
           <input type="text" id="partnerEmail" placeholder="🔍 Search or start new chat..." onkeypress="if(event.key==='Enter') startChat()" style="flex: 1;">
-          <button onclick="startChat()" class="chat-input-btn send" title="Start chat" style="flex-shrink: 0;">
+          <button type="button" onclick="startChat()" class="chat-input-btn send" title="Start chat" aria-label="Start chat" style="flex-shrink: 0;">
             <i class="bi bi-arrow-right-circle"></i>
           </button>
         </div>
@@ -959,7 +959,7 @@
     <div class="chat-main">
       <div class="chat-header">
         <div class="chat-header-info">
-          <button class="chat-input-btn d-md-none" onclick="toggleMobileSidebar()" title="Show chats" id="mobileMenuBtn" style="margin-right: 10px;">
+          <button type="button" class="chat-input-btn d-md-none" onclick="toggleMobileSidebar()" title="Show chats" id="mobileMenuBtn" aria-label="Show chats" style="margin-right: 10px;">
             <i class="bi bi-list"></i>
           </button>
           <div class="chat-header-avatar" id="chatAvatar">
@@ -975,18 +975,18 @@
           </div>
         </div>
         <div class="chat-header-actions">
-          <button onclick="toggleAudioCallModal()" title="Voice call">
+          <button type="button" onclick="toggleAudioCallModal()" title="Voice call" aria-label="Voice call">
             <i class="bi bi-telephone"></i>
           </button>
-          <button onclick="toggleVideoModal()" title="Video call">
+          <button type="button" onclick="toggleVideoModal()" title="Video call" aria-label="Video call">
             <i class="bi bi-camera-video"></i>
           </button>
-          <button onclick="showNewChatPrompt()" title="New chat">
+          <button type="button" onclick="showNewChatPrompt()" title="New chat" aria-label="New chat">
             <i class="bi bi-chat-dots"></i>
           </button>
         </div>
       </div>
-      
+
       <div id="messages" class="position-relative">
         <div class="loading-spinner">
           <div class="spinner-border text-primary" role="status">
@@ -994,31 +994,31 @@
           </div>
         </div>
       </div>
-      
-      <button class="scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom">
+
+      <button type="button" class="scroll-to-bottom" onclick="scrollToBottom()" title="Scroll to bottom" aria-label="Scroll to bottom">
         <i class="bi bi-arrow-down"></i>
       </button>
-      
+
       <div class="chat-input-wrapper">
         <div class="emoji-picker" id="emojiPicker"></div>
         <p id="recordingStatus" style="text-align: center; margin-bottom: 8px; color: #8696a0; font-size: 0.85rem;"></p>
         <p id="messageCharCount" style="text-align: right; margin-bottom: 5px; color: #8696a0; font-size: 0.75rem; display: none;">0 / 4096</p>
         <div class="chat-input-container">
-          <button class="chat-input-btn" onclick="toggleEmojiPicker()" title="Add emoji">
+          <button type="button" class="chat-input-btn" onclick="toggleEmojiPicker()" title="Add emoji" aria-label="Add emoji">
             <i class="bi bi-emoji-smile"></i>
           </button>
           <input type="file" id="fileInput" style="display:none;">
-          <button class="chat-input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file">
+          <button type="button" class="chat-input-btn" onclick="document.getElementById('fileInput').click()" title="Attach file" aria-label="Attach file">
             <i class="bi bi-paperclip"></i>
           </button>
           <input type="text" id="textMsg" placeholder="Type a message" aria-label="Message" maxlength="4096">
-          <button class="chat-input-btn" id="recordBtn" onclick="startVoiceRecording()" title="Record voice">
+          <button type="button" class="chat-input-btn" id="recordBtn" onclick="startVoiceRecording()" title="Record voice" aria-label="Record voice">
             <i class="bi bi-mic"></i>
           </button>
-          <button class="chat-input-btn" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording" style="display: none;">
+          <button type="button" class="chat-input-btn" id="stopBtn" onclick="stopVoiceRecording()" disabled title="Stop recording" aria-label="Stop recording" style="display: none;">
             <i class="bi bi-stop-circle"></i>
           </button>
-          <button class="chat-input-btn send" id="sendBtn" onclick="sendText()" title="Send message">
+          <button type="button" class="chat-input-btn send" id="sendBtn" onclick="sendText()" title="Send message" aria-label="Send message">
             <i class="bi bi-send-fill"></i>
           </button>
         </div>
@@ -1030,17 +1030,17 @@
   <div id="videoModal" class="video-modal">
     <div class="video-modal-content">
       <div id="videoContainer" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-        <video id="localVideo" autoplay playsinline muted style="width: 100%; max-width: 350px;"></video>
-        <video id="remoteVideo" autoplay playsinline style="width: 100%; max-width: 350px;"></video>
+        <video id="localVideo" playsinline muted style="width: 100%; max-width: 350px;"></video>
+        <video id="remoteVideo" playsinline style="width: 100%; max-width: 350px;"></video>
       </div>
       <div class="video-controls">
-        <button class="video-btn-start" onclick="startCall()">
+        <button type="button" class="video-btn-start" onclick="startCall()">
           <i class="bi bi-camera-video"></i> Start Call
         </button>
-        <button class="video-btn-end" onclick="hangup()">
+        <button type="button" class="video-btn-end" onclick="hangup()">
           <i class="bi bi-telephone-x"></i> End Call
         </button>
-        <button class="auth-btn-secondary" onclick="toggleVideoModal()">
+        <button type="button" class="auth-btn-secondary" onclick="toggleVideoModal()">
           Close
         </button>
       </div>
@@ -1056,16 +1056,16 @@
         </div>
         <h5 style="color: #e9edef; margin-bottom: 10px;">Voice Call</h5>
         <p id="audioCallStatus" style="color: #8696a0;">Connecting...</p>
-        <audio id="remoteAudio" autoplay></audio>
+        <audio id="remoteAudio"></audio>
       </div>
       <div class="video-controls">
-        <button class="video-btn-start" onclick="startAudioCall()">
+        <button type="button" class="video-btn-start" onclick="startAudioCall()">
           <i class="bi bi-telephone"></i> Start Call
         </button>
-        <button class="video-btn-end" onclick="hangupAudio()">
+        <button type="button" class="video-btn-end" onclick="hangupAudio()">
           <i class="bi bi-telephone-x"></i> End Call
         </button>
-        <button class="auth-btn-secondary" onclick="toggleAudioCallModal()">
+        <button type="button" class="auth-btn-secondary" onclick="toggleAudioCallModal()">
           Close
         </button>
       </div>
@@ -3050,8 +3050,14 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       pc = new RTCPeerConnection(configuration);
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-      document.getElementById('localVideo').srcObject = localStream;
-      pc.ontrack = ev => document.getElementById('remoteVideo').srcObject = ev.streams[0];
+      const localVideo = document.getElementById('localVideo');
+      localVideo.srcObject = localStream;
+      localVideo.play().catch(err => logger.error('Error playing local video:', err));
+      pc.ontrack = ev => {
+        const remoteVideo = document.getElementById('remoteVideo');
+        remoteVideo.srcObject = ev.streams[0];
+        remoteVideo.play().catch(err => logger.error('Error playing remote video:', err));
+      };
       pc.onicecandidate = ev => {
         if (ev.candidate) addDoc(collection(db, 'chats', chatId, 'call', 'candidates', 'caller'), ev.candidate.toJSON());
       };
@@ -3087,8 +3093,14 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       pc = new RTCPeerConnection(configuration);
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-      document.getElementById('localVideo').srcObject = localStream;
-      pc.ontrack = ev => document.getElementById('remoteVideo').srcObject = ev.streams[0];
+      const localVideo = document.getElementById('localVideo');
+      localVideo.srcObject = localStream;
+      localVideo.play().catch(err => logger.error('Error playing local video:', err));
+      pc.ontrack = ev => {
+        const remoteVideo = document.getElementById('remoteVideo');
+        remoteVideo.srcObject = ev.streams[0];
+        remoteVideo.play().catch(err => logger.error('Error playing remote video:', err));
+      };
       pc.onicecandidate = ev => {
         if (ev.candidate) addDoc(collection(db, 'chats', chatId, 'call', 'candidates', 'callee'), ev.candidate.toJSON());
       };
@@ -3124,7 +3136,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         audioLocalStream.getTracks().forEach(track => audioPC.addTrack(track, audioLocalStream));
         
         audioPC.ontrack = ev => {
-          document.getElementById('remoteAudio').srcObject = ev.streams[0];
+          const remoteAudio = document.getElementById('remoteAudio');
+          remoteAudio.srcObject = ev.streams[0];
+          remoteAudio.play().catch(err => logger.error('Error playing remote audio:', err));
           document.getElementById('audioCallStatus').textContent = 'Call connected';
         };
         
@@ -3199,7 +3213,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         audioLocalStream.getTracks().forEach(track => audioPC.addTrack(track, audioLocalStream));
         
         audioPC.ontrack = ev => {
-          document.getElementById('remoteAudio').srcObject = ev.streams[0];
+          const remoteAudio = document.getElementById('remoteAudio');
+          remoteAudio.srcObject = ev.streams[0];
+          remoteAudio.play().catch(err => logger.error('Error playing remote audio:', err));
           document.getElementById('audioCallStatus').textContent = 'Call connected';
         };
         
