@@ -2902,9 +2902,22 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           // Start online status updates
           startOnlineStatusUpdates();
           
+          // Request notification permission
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
+          
           // Load statuses and recent chats
           loadAllStatuses();
           loadRecentChats();
+          
+          // Refresh statuses every 5 minutes to show new ones and remove expired ones
+          if (window.statusRefreshInterval) {
+            clearInterval(window.statusRefreshInterval);
+          }
+          window.statusRefreshInterval = setInterval(() => {
+            loadAllStatuses();
+          }, 5 * 60 * 1000); // 5 minutes
         } catch (err) {
           logger.error('Error during authentication state change:', err);
           
@@ -3136,9 +3149,28 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
             const data = change.doc.data();
             displayMessage(data, change.doc.id);
             
-            // Play notification sound for new messages from others
-            if (data.senderId !== currentUser.uid && document.hidden) {
-              playNotificationSound();
+            // Play notification sound and show notification for new messages from others
+            if (data.senderId !== currentUser.uid) {
+              if (document.hidden) {
+                playNotificationSound();
+                // Show browser notification if supported
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification('New message', {
+                    body: data.type === 'text' ? data.text : 'Media message',
+                    icon: '/favicon.ico'
+                  });
+                }
+              } else {
+                // Show brief in-app notification
+                const notif = document.createElement('div');
+                notif.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #00a884; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 2000; animation: slideDown 0.3s ease;';
+                notif.textContent = 'New message received';
+                document.body.appendChild(notif);
+                setTimeout(() => {
+                  notif.style.animation = 'slideUp 0.3s ease';
+                  setTimeout(() => notif.remove(), 300);
+                }, 2000);
+              }
             }
           }
         });
