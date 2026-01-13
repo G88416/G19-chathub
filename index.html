@@ -2045,20 +2045,24 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
             window.recaptchaVerifier.clear();
         }
         
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            size: 'invisible'
-        });
-
-        signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
-            .then(confirmationResult => {
-                const code = prompt('Enter SMS code');
-                if (!code) return; // User cancelled
-                
-                return confirmationResult.confirm(code);
-            })
-            .catch(err => {
-                alert(err.message);
+        try {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                size: 'invisible'
             });
+
+            signInWithPhoneNumber(auth, phone, window.recaptchaVerifier)
+                .then(confirmationResult => {
+                    const code = prompt('Enter SMS code');
+                    if (!code) return; // User cancelled
+                    
+                    return confirmationResult.confirm(code);
+                })
+                .catch(err => {
+                    alert(err.message);
+                });
+        } catch (err) {
+            alert(err.message);
+        }
     };
 
     onAuthStateChanged(auth, async user => {
