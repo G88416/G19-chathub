@@ -2352,7 +2352,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           document.getElementById('chat').classList.remove('d-none');
           
           // Only update user status if profile already exists and has required fields
-          // userData is defined above at line 2231, so this check is safe
+          // userData is defined above at line 2344
           // This prevents unnecessary Firestore writes during profile setup
           if (userDoc.exists() && userData?.name) {
             const emailLower = user.email ? user.email.toLowerCase().trim() : null;
@@ -2379,9 +2379,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
             // "rules not deployed" vs "document doesn't exist"
             try {
               // Attempt to create minimal profile - if this works, rules ARE deployed
-              const userEmail = user.email || '';
+              const userEmail = user.email || null;
               const emailLower = userEmail ? userEmail.toLowerCase().trim() : null;
-              const defaultName = userEmail ? userEmail.split('@')[0] : 'User';
+              // Use a unique default name for users without email (e.g., phone auth)
+              const defaultName = userEmail ? userEmail.split('@')[0] : `User_${user.uid.slice(-6)}`;
               
               await setDoc(doc(db, 'users', user.uid), {
                 email: userEmail,
