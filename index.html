@@ -2327,6 +2327,11 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         try {
           // Check if user has completed profile setup
           const userDoc = await getDoc(doc(db, 'users', user.uid));
+          
+          // If document doesn't exist, show profile setup
+          // This can happen when:
+          // 1. User signed up but didn't complete profile
+          // 2. User's profile was deleted
           if (!userDoc.exists() || !userDoc.data()?.name) {
             // Show profile setup modal for new users or users without name
             // Hide auth container so user doesn't see login form behind modal
@@ -2347,7 +2352,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           document.getElementById('chat').classList.remove('d-none');
           
           // Only update user status if profile already exists and has required fields
-          // userData is defined above at line 2231, so this check is safe
+          // This check uses userData which was loaded from the document above
           // This prevents unnecessary Firestore writes during profile setup
           if (userDoc.exists() && userData?.name) {
             const emailLower = user.email ? user.email.toLowerCase().trim() : null;
@@ -2365,11 +2370,55 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         } catch (err) {
           logger.error('Error during authentication state change:', err);
           
-          // Provide specific error messages for permission issues
+          // Enhanced error detection and handling
+          // See LOGIN_ERROR_FIX.md for detailed explanation of this logic
           let errorMessage;
           
           if (isPermissionError(err)) {
-            errorMessage = getPermissionErrorMessage();
+            // Smart detection: Try to create profile to distinguish between
+            // "rules not deployed" vs "document doesn't exist"
+            try {
+              // Attempt to create minimal profile - if this works, rules ARE deployed
+              const userEmail = user.email || null;
+              const emailLower = userEmail ? userEmail.toLowerCase().trim() : null;
+              // Use a unique default name for users without email (e.g., phone auth)
+              // For email auth, extract username before @ symbol (with validation)
+              let defaultName = `User_${user.uid.slice(-6)}`;
+              if (userEmail && userEmail.includes('@')) {
+                defaultName = userEmail.split('@')[0];
+              }
+              
+              await setDoc(doc(db, 'users', user.uid), {
+                email: userEmail,
+                emailLower: emailLower,
+                name: defaultName,
+                about: 'Hey there! I am using ChatHub',
+                photoURL: null,
+                online: true,
+                lastSeen: serverTimestamp(),
+                settings: {
+                  notifications: true
+                }
+              });
+              
+              // Success! Rules are deployed, document was just missing.
+              // Show profile setup so user can customize their profile
+              logger.info('Created minimal profile for user. Showing profile setup.');
+              document.getElementById('auth').classList.add('d-none');
+              window.showProfileSetup();
+              return;
+            } catch (createErr) {
+              // If we get permission error here, rules are definitely not deployed
+              if (isPermissionError(createErr)) {
+                logger.error('Permission error when creating profile. Rules not deployed:', createErr);
+                // getPermissionErrorMessage() displays the banner and returns the error text
+                errorMessage = getPermissionErrorMessage();
+              } else {
+                // Some other error during profile creation
+                logger.error('Error creating minimal profile:', createErr);
+                errorMessage = 'Failed to create user profile. ' + (createErr.message || 'Please try again.');
+              }
+            }
           } else if (err.code === 'unavailable') {
             errorMessage = 'Failed to load user profile. Network error. Please check your connection.';
           } else {
@@ -2378,6 +2427,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           
           // If there's an error loading user data, sign out to prevent broken state
           await signOut(auth);
+          
+          // Display error message to user
           alert(errorMessage);
         }
       } else {
