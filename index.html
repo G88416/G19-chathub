@@ -723,34 +723,6 @@
   </style>
 </head>
 <body>
-  <!-- Permission Error Banner -->
-  <div id="permissionErrorBanner" style="display: none; position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%); color: white; padding: 20px; text-align: center; z-index: 9999; box-shadow: 0 4px 20px rgba(217, 83, 79, 0.5); animation: slideDown 0.5s ease-out;">
-    <div style="max-width: 900px; margin: 0 auto;">
-      <h3 style="margin: 0 0 15px 0; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.8rem;"></i>
-        <span>Firebase Security Rules Not Deployed</span>
-      </h3>
-      <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6;">
-        The application cannot access Firebase because security rules haven't been deployed yet.<br>
-        <strong>This is required for the app to function.</strong>
-      </p>
-      <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 15px; margin: 15px 0; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;">
-        <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 0.95rem;">📋 Quick Fix - Choose One:</p>
-        <ol style="margin: 0; padding-left: 20px; font-size: 0.9rem; line-height: 1.8;">
-          <li><strong>Firebase CLI:</strong> <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; font-family: monospace;">firebase deploy --only firestore:rules,storage:rules</code></li>
-          <li><strong>Firebase Console:</strong> Go to <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" style="color: #ffeb3b; text-decoration: underline;">Firebase Console</a> → Select "g19-chathub" → Deploy rules</li>
-          <li><strong>Deploy Script:</strong> Run <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; font-family: monospace;">./deploy-rules.sh</code> from project directory</li>
-        </ol>
-      </div>
-      <p style="margin: 15px 0 0 0; font-size: 0.85rem;">
-        <i class="bi bi-info-circle"></i> See <strong>QUICK_FIX_PERMISSIONS.md</strong> in the repository for detailed instructions
-      </p>
-      <button onclick="dismissPermissionBanner()" style="margin-top: 15px; padding: 8px 20px; background: rgba(255,255,255,0.2); border: 2px solid white; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-        Dismiss (I understand)
-      </button>
-    </div>
-  </div>
-
   <!-- Auth Section -->
   <div id="auth" class="auth-container">
     <div class="auth-card">
@@ -1075,28 +1047,6 @@
   <script>
     // Global functions that need to be accessible from onclick handlers
     
-    // Show prominent permission error banner
-    window.showPermissionBanner = function() {
-      const banner = document.getElementById('permissionErrorBanner');
-      if (banner) {
-        banner.style.display = 'block';
-        // Store that banner was shown
-        sessionStorage.setItem('permissionBannerShown', 'true');
-      }
-    };
-    
-    // Dismiss permission error banner
-    window.dismissPermissionBanner = function() {
-      const banner = document.getElementById('permissionErrorBanner');
-      if (banner) {
-        banner.style.animation = 'slideUp 0.5s ease-out';
-        setTimeout(() => {
-          banner.style.display = 'none';
-          banner.style.animation = '';
-        }, 500);
-      }
-    };
-    
     window.scrollToBottom = function() {
       const el = document.getElementById('messages');
       el.scrollTop = el.scrollHeight;
@@ -1392,9 +1342,6 @@
     // Helper function to generate permission error message for users
     // Note: Project name 'g19-chathub' is specific to this project
     function getPermissionErrorMessage() {
-      // Show prominent banner on permission error
-      window.showPermissionBanner();
-      
       return `❌ PERMISSION ERROR: Firebase security rules not deployed!
 
 📋 To fix this issue:
