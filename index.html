@@ -2371,27 +2371,21 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           logger.error('Error during authentication state change:', err);
           
           // Enhanced error detection and handling
+          // See LOGIN_ERROR_FIX.md for detailed explanation of this logic
           let errorMessage;
           let shouldShowBanner = false;
           
-          // Check if this is a genuine permission error (rules not deployed)
-          // vs. a missing document error (profile not created)
           if (isPermissionError(err)) {
-            // For permission errors during getDoc, check if it's due to missing rules
-            // or just a missing document. If the error is permission-denied on read,
-            // it's likely that rules aren't deployed OR the document doesn't exist.
-            // We can't distinguish between these cases reliably, so we'll:
-            // 1. Try to create a minimal profile document
-            // 2. If that fails with permission error, rules aren't deployed
-            // 3. If that succeeds, it was just a missing document
-            
+            // Smart detection: Try to create profile to distinguish between
+            // "rules not deployed" vs "document doesn't exist"
             try {
               // Attempt to create minimal profile - if this works, rules ARE deployed
-              const emailLower = user.email ? user.email.toLowerCase().trim() : null;
-              const defaultName = user.email ? user.email.split('@')[0] : 'User';
+              const userEmail = user.email || '';
+              const emailLower = userEmail ? userEmail.toLowerCase().trim() : null;
+              const defaultName = userEmail ? userEmail.split('@')[0] : 'User';
               
               await setDoc(doc(db, 'users', user.uid), {
-                email: user.email,
+                email: userEmail,
                 emailLower: emailLower,
                 name: defaultName,
                 about: 'Hey there! I am using ChatHub',
@@ -2430,10 +2424,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           // If there's an error loading user data, sign out to prevent broken state
           await signOut(auth);
           
-          // Show appropriate error message
-          if (shouldShowBanner) {
-            // Banner is already shown by getPermissionErrorMessage()
-          }
+          // Show appropriate error message (banner already shown if shouldShowBanner is true)
           alert(errorMessage);
         }
       } else {
