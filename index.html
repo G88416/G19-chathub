@@ -2373,7 +2373,6 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           // Enhanced error detection and handling
           // See LOGIN_ERROR_FIX.md for detailed explanation of this logic
           let errorMessage;
-          let shouldShowBanner = false;
           
           if (isPermissionError(err)) {
             // Smart detection: Try to create profile to distinguish between
@@ -2407,8 +2406,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
               // If we get permission error here, rules are definitely not deployed
               if (isPermissionError(createErr)) {
                 logger.error('Permission error when creating profile. Rules not deployed:', createErr);
+                // getPermissionErrorMessage() displays the banner and returns the error text
                 errorMessage = getPermissionErrorMessage();
-                shouldShowBanner = true;
               } else {
                 // Some other error during profile creation
                 logger.error('Error creating minimal profile:', createErr);
@@ -2424,7 +2423,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           // If there's an error loading user data, sign out to prevent broken state
           await signOut(auth);
           
-          // Show appropriate error message (banner already shown if shouldShowBanner is true)
+          // Display error message to user
           alert(errorMessage);
         }
       } else {
