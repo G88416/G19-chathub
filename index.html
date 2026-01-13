@@ -707,6 +707,10 @@
       from { transform: translateY(-100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+    @keyframes slideUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
     img.rounded { 
       border-radius: 8px; 
       max-width: 100%; 
@@ -1805,7 +1809,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         } else if (err.code === 'auth/weak-password') {
           errorMessage = 'Password is too weak. Please use a stronger password.';
         }
-        authError.innerHTML = errorMessage;
+        // Use textContent for regular error messages to prevent XSS
+        authError.textContent = errorMessage;
         authError.style.display = 'block';
       } finally {
         signupBtn.disabled = false;
@@ -2211,7 +2216,8 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         } else if (err.code === 'auth/network-request-failed') {
           errorMessage = 'Network error. Please check your connection and try again.';
         }
-        authError.innerHTML = errorMessage;
+        // Use textContent for regular error messages to prevent XSS
+        authError.textContent = errorMessage;
         authError.style.display = 'block';
       } finally {
         loginBtn.disabled = false;
