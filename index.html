@@ -1748,7 +1748,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
-             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc } 
+             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc, arrayUnion } 
       from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -2461,6 +2461,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         const userData = userDoc.data();
 
         // Create status document with 24-hour expiry
+        // NOTE: Using client-side timestamp for expiry. This may lead to slight
+        // inconsistencies due to client clock differences. For production, consider
+        // using a Cloud Function to set expiry based on server timestamp.
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + STATUS_EXPIRY_HOURS);
 
@@ -2647,7 +2650,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           }, STATUS_PROGRESS_UPDATE_MS);
         } else if (status.mediaType === 'video') {
           content.innerHTML = `
-            <video src="${status.mediaURL}" controls autoplay onended="nextStatus()">
+            <video src="${status.mediaURL}" controls autoplay>
             ${status.caption ? `<div class="status-viewer-text">${status.caption}</div>` : ''}
           `;
           
@@ -2658,11 +2661,11 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
           };
         }
 
-        // Mark as viewed
+        // Mark as viewed using arrayUnion for safe concurrent updates
         if (userId !== currentUser.uid && !status.views?.includes(currentUser.uid)) {
           const statusRef = doc(db, 'status', status.id);
           setDoc(statusRef, {
-            views: [...(status.views || []), currentUser.uid]
+            views: arrayUnion(currentUser.uid)
           }, { merge: true }).catch(err => logger.error('Error marking status as viewed:', err));
         }
       }
@@ -2699,7 +2702,15 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         if (statuses.length > 0) {
           viewUserStatuses(userId, statuses);
         } else if (isMyStatus) {
-          alert('You have no active status. Create one!');
+          // Show notification banner instead of alert
+          const notif = document.createElement('div');
+          notif.className = 'notification-banner';
+          notif.textContent = 'You have no active status. Create one!';
+          document.body.appendChild(notif);
+          setTimeout(() => {
+            notif.classList.add('hiding');
+            setTimeout(() => notif.remove(), 300);
+          }, NOTIFICATION_DURATION_MS);
         }
       } catch (err) {
         logger.error('Error loading user statuses:', err);
@@ -3200,8 +3211,9 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
                 playNotificationSound();
                 // Show browser notification if supported
                 if ('Notification' in window && Notification.permission === 'granted') {
+                  const messageText = data.type === 'text' ? ValidationUtils.sanitizeText(data.text) : 'Media message';
                   new Notification('New message', {
-                    body: data.type === 'text' ? data.text : 'Media message',
+                    body: messageText,
                     icon: '/favicon.ico'
                   });
                 }
