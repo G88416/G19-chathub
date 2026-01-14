@@ -1301,6 +1301,75 @@
     </div>
   </div>
 
+  <!-- Friends Modal -->
+  <div id="friendsModal" class="video-modal">
+    <div class="video-modal-content" style="max-width: 600px;">
+      <!-- Tabs -->
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2a3942;">
+        <button id="friendsListTab" class="status-tab active" onclick="switchFriendsTab('list')" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 2px solid #00a884; color: #00a884; font-weight: 500; cursor: pointer;">
+          <i class="bi bi-people"></i> Friends
+        </button>
+        <button id="friendRequestsTab" class="status-tab" onclick="switchFriendsTab('requests')" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 2px solid transparent; color: #8696a0; font-weight: 500; cursor: pointer;">
+          <i class="bi bi-person-plus"></i> Requests <span id="requestsBadge" style="display: none; background: #d9534f; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 5px;">0</span>
+        </button>
+        <button id="addFriendTab" class="status-tab" onclick="switchFriendsTab('add')" style="flex: 1; padding: 12px; background: none; border: none; border-bottom: 2px solid transparent; color: #8696a0; font-weight: 500; cursor: pointer;">
+          <i class="bi bi-person-plus-fill"></i> Add Friend
+        </button>
+      </div>
+
+      <!-- Friends List Panel -->
+      <div id="friendsListPanel" style="display: block;">
+        <h4 style="color: #e9edef; margin-bottom: 20px;">
+          <i class="bi bi-people"></i> Your Friends
+        </h4>
+        <div id="friendsList" style="max-height: 400px; overflow-y: auto;">
+          <p style="color: #8696a0; text-align: center; padding: 40px;">
+            <i class="bi bi-people" style="font-size: 3rem; display: block; margin-bottom: 15px;"></i>
+            Loading friends...
+          </p>
+        </div>
+        <button class="auth-btn-secondary" onclick="toggleFriendsModal()" style="width: 100%; margin-top: 20px;">Close</button>
+      </div>
+
+      <!-- Friend Requests Panel -->
+      <div id="friendRequestsPanel" style="display: none;">
+        <h4 style="color: #e9edef; margin-bottom: 20px;">
+          <i class="bi bi-person-plus"></i> Friend Requests
+        </h4>
+        <div id="friendRequestsList" style="max-height: 400px; overflow-y: auto;">
+          <p style="color: #8696a0; text-align: center; padding: 40px;">
+            <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 15px;"></i>
+            Loading requests...
+          </p>
+        </div>
+        <button class="auth-btn-secondary" onclick="toggleFriendsModal()" style="width: 100%; margin-top: 20px;">Close</button>
+      </div>
+
+      <!-- Add Friend Panel -->
+      <div id="addFriendPanel" style="display: none;">
+        <h4 style="color: #e9edef; margin-bottom: 20px;">
+          <i class="bi bi-person-plus-fill"></i> Add a Friend
+        </h4>
+        <p style="color: #8696a0; margin-bottom: 20px;">
+          Search for users by email, username, or phone number
+        </p>
+        <div style="margin-bottom: 20px;">
+          <input type="text" id="friendSearchInput" placeholder="Enter email, username, or phone..." style="width: 100%; padding: 12px 16px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.95rem;">
+        </div>
+        <div id="friendSearchResults" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+          <!-- Search results will appear here -->
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="auth-btn-primary" onclick="searchForFriend()" style="flex: 1;">
+            <i class="bi bi-search"></i> Search
+          </button>
+          <button class="auth-btn-secondary" onclick="toggleFriendsModal()" style="flex: 1;">Close</button>
+        </div>
+        <p id="friendSearchError" style="color: #d9534f; text-align: center; margin-top: 10px; display: none;"></p>
+      </div>
+    </div>
+  </div>
+
   <!-- Connection Status Indicator -->
   <div id="connectionStatus" class="connection-status">
     <i class="bi bi-wifi-off"></i> Disconnected
@@ -1318,6 +1387,9 @@
           <h5 style="margin: 0;">ChatHub</h5>
         </div>
         <div style="display: flex; gap: 15px;">
+          <button class="chat-input-btn" onclick="toggleFriendsModal()" title="Friends">
+            <i class="bi bi-person-heart"></i>
+          </button>
           <button class="chat-input-btn" onclick="toggleCreateStatusModal()" title="Create Status">
             <i class="bi bi-camera"></i>
           </button>
@@ -1845,7 +1917,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, getDocs, query, where, addDoc, 
-             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc, arrayUnion } 
+             orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, getDoc, arrayUnion, updateDoc } 
       from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
@@ -3306,6 +3378,367 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         logger.error('Error loading user statuses:', err);
       }
     }
+
+    // Friend Request System
+    window.toggleFriendsModal = function() {
+      const modal = document.getElementById('friendsModal');
+      modal.classList.toggle('show');
+      if (modal.classList.contains('show')) {
+        loadFriends();
+        loadFriendRequests();
+      }
+    };
+
+    window.switchFriendsTab = function(tab) {
+      const listTab = document.getElementById('friendsListTab');
+      const requestsTab = document.getElementById('friendRequestsTab');
+      const addTab = document.getElementById('addFriendTab');
+      const listPanel = document.getElementById('friendsListPanel');
+      const requestsPanel = document.getElementById('friendRequestsPanel');
+      const addPanel = document.getElementById('addFriendPanel');
+
+      // Reset all tabs
+      [listTab, requestsTab, addTab].forEach(t => {
+        t.style.borderBottomColor = 'transparent';
+        t.style.color = '#8696a0';
+      });
+      [listPanel, requestsPanel, addPanel].forEach(p => p.style.display = 'none');
+
+      // Activate selected tab
+      if (tab === 'list') {
+        listTab.style.borderBottomColor = '#00a884';
+        listTab.style.color = '#00a884';
+        listPanel.style.display = 'block';
+        loadFriends();
+      } else if (tab === 'requests') {
+        requestsTab.style.borderBottomColor = '#00a884';
+        requestsTab.style.color = '#00a884';
+        requestsPanel.style.display = 'block';
+        loadFriendRequests();
+      } else if (tab === 'add') {
+        addTab.style.borderBottomColor = '#00a884';
+        addTab.style.color = '#00a884';
+        addPanel.style.display = 'block';
+      }
+    };
+
+    async function loadFriends() {
+      const listEl = document.getElementById('friendsList');
+      listEl.innerHTML = '<p style="color: #8696a0; text-align: center; padding: 20px;">Loading...</p>';
+      
+      if (!currentUser) return;
+      
+      try {
+        const friendsSnapshot = await getDocs(collection(db, 'users', currentUser.uid, 'friends'));
+        
+        if (friendsSnapshot.empty) {
+          listEl.innerHTML = `
+            <p style="color: #8696a0; text-align: center; padding: 40px;">
+              <i class="bi bi-people" style="font-size: 3rem; display: block; margin-bottom: 15px;"></i>
+              No friends yet. Send friend requests to connect!
+            </p>
+          `;
+          return;
+        }
+        
+        listEl.innerHTML = '';
+        for (const friendDoc of friendsSnapshot.docs) {
+          const friendId = friendDoc.id;
+          const friendUserDoc = await getDoc(doc(db, 'users', friendId));
+          const friendData = friendUserDoc.data();
+          
+          const friendItem = document.createElement('div');
+          friendItem.style.cssText = 'padding: 15px; background: #202c33; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;';
+          
+          const avatar = friendData?.photoURL
+            ? `<img src="${friendData.photoURL}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">`
+            : `<div style="width: 50px; height: 50px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${(friendData?.name || 'U').charAt(0).toUpperCase()}</div>`;
+          
+          const onlineStatus = friendData?.online 
+            ? '<span class="online-status" style="margin-left: 8px;"></span>'
+            : '';
+          
+          friendItem.innerHTML = `
+            ${avatar}
+            <div style="flex: 1;">
+              <div style="color: #e9edef; font-weight: 500;">${friendData?.name || 'Unknown'}${onlineStatus}</div>
+              <div style="color: #8696a0; font-size: 0.85rem;">${friendData?.about || 'Hey there! I am using ChatHub'}</div>
+            </div>
+            <button onclick="removeFriend('${friendId}')" style="padding: 8px 12px; background: #d9534f; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.85rem;">
+              <i class="bi bi-person-x"></i> Remove
+            </button>
+          `;
+          
+          listEl.appendChild(friendItem);
+        }
+      } catch (err) {
+        logger.error('Error loading friends:', err);
+        listEl.innerHTML = '<p style="color: #d9534f; text-align: center; padding: 20px;">Error loading friends</p>';
+      }
+    }
+
+    async function loadFriendRequests() {
+      const listEl = document.getElementById('friendRequestsList');
+      const badge = document.getElementById('requestsBadge');
+      listEl.innerHTML = '<p style="color: #8696a0; text-align: center; padding: 20px;">Loading...</p>';
+      
+      if (!currentUser) return;
+      
+      try {
+        const requestsSnapshot = await getDocs(
+          query(
+            collection(db, 'friendRequests'),
+            where('recipientId', '==', currentUser.uid),
+            where('status', '==', 'pending')
+          )
+        );
+        
+        const count = requestsSnapshot.size;
+        if (count > 0) {
+          badge.style.display = 'inline';
+          badge.textContent = count;
+        } else {
+          badge.style.display = 'none';
+        }
+        
+        if (requestsSnapshot.empty) {
+          listEl.innerHTML = `
+            <p style="color: #8696a0; text-align: center; padding: 40px;">
+              <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 15px;"></i>
+              No pending friend requests
+            </p>
+          `;
+          return;
+        }
+        
+        listEl.innerHTML = '';
+        for (const requestDoc of requestsSnapshot.docs) {
+          const requestData = requestDoc.data();
+          const senderId = requestData.senderId;
+          const senderDoc = await getDoc(doc(db, 'users', senderId));
+          const senderData = senderDoc.data();
+          
+          const requestItem = document.createElement('div');
+          requestItem.style.cssText = 'padding: 15px; background: #202c33; border-radius: 8px; margin-bottom: 10px;';
+          
+          const avatar = senderData?.photoURL
+            ? `<img src="${senderData.photoURL}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">`
+            : `<div style="width: 50px; height: 50px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-bottom: 10px;">${(senderData?.name || 'U').charAt(0).toUpperCase()}</div>`;
+          
+          const timeAgo = getTimeAgo(requestData.timestamp?.toDate());
+          
+          requestItem.innerHTML = `
+            <div style="text-align: center; margin-bottom: 15px;">
+              ${avatar}
+              <div style="color: #e9edef; font-weight: 500; margin-top: 8px;">${senderData?.name || 'Unknown'}</div>
+              <div style="color: #8696a0; font-size: 0.85rem;">${timeAgo}</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button onclick="acceptFriendRequest('${requestDoc.id}', '${senderId}')" style="flex: 1; padding: 10px; background: #00a884; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 500;">
+                <i class="bi bi-check-circle"></i> Accept
+              </button>
+              <button onclick="declineFriendRequest('${requestDoc.id}')" style="flex: 1; padding: 10px; background: #d9534f; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 500;">
+                <i class="bi bi-x-circle"></i> Decline
+              </button>
+            </div>
+          `;
+          
+          listEl.appendChild(requestItem);
+        }
+      } catch (err) {
+        logger.error('Error loading friend requests:', err);
+        listEl.innerHTML = '<p style="color: #d9534f; text-align: center; padding: 20px;">Error loading requests</p>';
+      }
+    }
+
+    window.searchForFriend = async function() {
+      const input = document.getElementById('friendSearchInput').value.trim();
+      const resultsEl = document.getElementById('friendSearchResults');
+      const errorEl = document.getElementById('friendSearchError');
+      
+      errorEl.style.display = 'none';
+      
+      if (!input) {
+        errorEl.textContent = 'Please enter an email, username, or phone number';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      resultsEl.innerHTML = '<p style="color: #8696a0; text-align: center; padding: 20px;">Searching...</p>';
+      
+      try {
+        const inputLower = input.toLowerCase();
+        let snapshot;
+        
+        // Try email first
+        let q = query(collection(db, 'users'), where('emailLower', '==', inputLower));
+        snapshot = await getDocs(q);
+        
+        // Try username
+        if (snapshot.empty) {
+          q = query(collection(db, 'users'), where('username', '==', inputLower));
+          snapshot = await getDocs(q);
+        }
+        
+        // Try phone
+        if (snapshot.empty) {
+          q = query(collection(db, 'users'), where('phone', '==', input));
+          snapshot = await getDocs(q);
+        }
+        
+        if (snapshot.empty) {
+          resultsEl.innerHTML = '<p style="color: #8696a0; text-align: center; padding: 20px;">No user found</p>';
+          return;
+        }
+        
+        resultsEl.innerHTML = '';
+        for (const userDoc of snapshot.docs) {
+          const userId = userDoc.id;
+          const userData = userDoc.data();
+          
+          // Skip self
+          if (userId === currentUser.uid) {
+            resultsEl.innerHTML = '<p style="color: #8696a0; text-align: center; padding: 20px;">You cannot add yourself as a friend</p>';
+            continue;
+          }
+          
+          // Check if already friends
+          const friendDoc = await getDoc(doc(db, 'users', currentUser.uid, 'friends', userId));
+          const isFriend = friendDoc.exists();
+          
+          // Check if request already sent
+          const requestQuery = query(
+            collection(db, 'friendRequests'),
+            where('senderId', '==', currentUser.uid),
+            where('recipientId', '==', userId),
+            where('status', '==', 'pending')
+          );
+          const requestSnapshot = await getDocs(requestQuery);
+          const requestPending = !requestSnapshot.empty;
+          
+          const userItem = document.createElement('div');
+          userItem.style.cssText = 'padding: 15px; background: #202c33; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;';
+          
+          const avatar = userData?.photoURL
+            ? `<img src="${userData.photoURL}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">`
+            : `<div style="width: 50px; height: 50px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">${(userData?.name || 'U').charAt(0).toUpperCase()}</div>`;
+          
+          let actionButton = '';
+          if (isFriend) {
+            actionButton = '<span style="color: #00a884;"><i class="bi bi-check-circle"></i> Friends</span>';
+          } else if (requestPending) {
+            actionButton = '<span style="color: #8696a0;"><i class="bi bi-clock"></i> Request Sent</span>';
+          } else {
+            actionButton = `<button onclick="sendFriendRequest('${userId}')" style="padding: 8px 16px; background: #00a884; border: none; border-radius: 6px; color: white; cursor: pointer; font-weight: 500;"><i class="bi bi-person-plus"></i> Add Friend</button>`;
+          }
+          
+          userItem.innerHTML = `
+            ${avatar}
+            <div style="flex: 1;">
+              <div style="color: #e9edef; font-weight: 500;">${userData?.name || 'Unknown'}</div>
+              <div style="color: #8696a0; font-size: 0.85rem;">${userData?.email || userData?.phone || ''}</div>
+            </div>
+            ${actionButton}
+          `;
+          
+          resultsEl.appendChild(userItem);
+        }
+      } catch (err) {
+        logger.error('Error searching for friend:', err);
+        resultsEl.innerHTML = '<p style="color: #d9534f; text-align: center; padding: 20px;">Error searching</p>';
+      }
+    };
+
+    window.sendFriendRequest = async function(recipientId) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const userData = userDoc.data();
+        
+        await addDoc(collection(db, 'friendRequests'), {
+          senderId: currentUser.uid,
+          senderName: userData?.name || 'Unknown',
+          senderPhoto: userData?.photoURL || null,
+          recipientId: recipientId,
+          status: 'pending',
+          timestamp: serverTimestamp()
+        });
+        
+        // Show success
+        const notif = document.createElement('div');
+        notif.className = 'notification-banner';
+        notif.textContent = 'Friend request sent!';
+        document.body.appendChild(notif);
+        setTimeout(() => {
+          notif.classList.add('hiding');
+          setTimeout(() => notif.remove(), 300);
+        }, 2000);
+        
+        // Refresh search results
+        window.searchForFriend();
+      } catch (err) {
+        logger.error('Error sending friend request:', err);
+        alert('Failed to send friend request');
+      }
+    };
+
+    window.acceptFriendRequest = async function(requestId, senderId) {
+      try {
+        // Add to both users' friends collections
+        await setDoc(doc(db, 'users', currentUser.uid, 'friends', senderId), {
+          addedAt: serverTimestamp()
+        });
+        await setDoc(doc(db, 'users', senderId, 'friends', currentUser.uid), {
+          addedAt: serverTimestamp()
+        });
+        
+        // Update request status
+        await updateDoc(doc(db, 'friendRequests', requestId), {
+          status: 'accepted'
+        });
+        
+        // Show success
+        const notif = document.createElement('div');
+        notif.className = 'notification-banner';
+        notif.textContent = 'Friend request accepted!';
+        document.body.appendChild(notif);
+        setTimeout(() => {
+          notif.classList.add('hiding');
+          setTimeout(() => notif.remove(), 300);
+        }, 2000);
+        
+        loadFriendRequests();
+      } catch (err) {
+        logger.error('Error accepting friend request:', err);
+        alert('Failed to accept friend request');
+      }
+    };
+
+    window.declineFriendRequest = async function(requestId) {
+      try {
+        await updateDoc(doc(db, 'friendRequests', requestId), {
+          status: 'declined'
+        });
+        
+        loadFriendRequests();
+      } catch (err) {
+        logger.error('Error declining friend request:', err);
+        alert('Failed to decline friend request');
+      }
+    };
+
+    window.removeFriend = async function(friendId) {
+      if (!confirm('Are you sure you want to remove this friend?')) return;
+      
+      try {
+        await deleteDoc(doc(db, 'users', currentUser.uid, 'friends', friendId));
+        await deleteDoc(doc(db, 'users', friendId, 'friends', currentUser.uid));
+        
+        loadFriends();
+      } catch (err) {
+        logger.error('Error removing friend:', err);
+        alert('Failed to remove friend');
+      }
+    };
 
     // Recent Chats Management
     async function saveRecentChat(partnerUserId, partnerData) {
