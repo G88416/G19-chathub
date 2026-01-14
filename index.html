@@ -1693,17 +1693,19 @@
     let isVideoEnabled = true;
     let isAudioOnlyMuted = false;
 
-    // Ringtone control functions with cached DOM references
-    const ringtoneAudio = document.getElementById('ringtone');
-    const ringbackAudio = document.getElementById('ringback');
+    // Ringtone control functions with lazy-loaded DOM references
+    let ringtoneAudio = null;
+    let ringbackAudio = null;
     
     function playRingtone() {
+      if (!ringtoneAudio) ringtoneAudio = document.getElementById('ringtone');
       if (ringtoneAudio) {
         ringtoneAudio.play().catch(err => logger.error('Error playing ringtone:', err));
       }
     }
 
     function stopRingtone() {
+      if (!ringtoneAudio) ringtoneAudio = document.getElementById('ringtone');
       if (ringtoneAudio) {
         ringtoneAudio.pause();
         ringtoneAudio.currentTime = 0;
@@ -1711,12 +1713,14 @@
     }
 
     function playRingback() {
+      if (!ringbackAudio) ringbackAudio = document.getElementById('ringback');
       if (ringbackAudio) {
         ringbackAudio.play().catch(err => logger.error('Error playing ringback:', err));
       }
     }
 
     function stopRingback() {
+      if (!ringbackAudio) ringbackAudio = document.getElementById('ringback');
       if (ringbackAudio) {
         ringbackAudio.pause();
         ringbackAudio.currentTime = 0;
@@ -1729,7 +1733,7 @@
     }
 
     // Helper function to get user-friendly error messages
-    function getErrorMessage(err, context) {
+    function getErrorMessage(err) {
       let errorMsg = '';
       
       if (err.code === 'permission-denied') {
