@@ -181,5 +181,34 @@ service firebase.storage {
       // UPDATE/DELETE: Not allowed to preserve voice message history
       // Voice messages are immutable once sent
     }
+    
+    // ========== STATUS UPDATES ==========
+    // Storage path: /status/{userId}/{fileName}
+    // Used for 24-hour status updates (images, videos, text-as-image, audio)
+    
+    match /status/{userId}/{fileName} {
+      // READ: Anyone authenticated can read status updates
+      // This allows:
+      // - Viewing friends' status updates
+      // - Displaying status previews in status list
+      // - Status updates are visible to all users (like Instagram/WhatsApp stories)
+      allow read: if isSignedIn();
+      
+      // CREATE/UPDATE: Users can only upload their own status
+      // Requirements:
+      // - User must be authenticated
+      // - userId in path must match authenticated user
+      // - File size must be under 10MB (reasonable for status media)
+      // - File must be a valid type (images, videos, audio)
+      // This enables status creation with photos, videos, text, or audio
+      allow create, update: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidFileSize(10)
+        && (isValidImageType() || isValidVoiceType() || request.resource.contentType == 'video/mp4' || request.resource.contentType == 'video/webm');
+      
+      // DELETE: Users can delete their own status
+      // Allows removing status before 24-hour expiry
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
   }
 }
