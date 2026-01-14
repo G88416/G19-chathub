@@ -1974,6 +1974,19 @@
              (err.message && err.message.toLowerCase().includes('permission'));
     }
     
+    // Helper function to show notification banner
+    function showNotification(message, type = 'success') {
+      const notif = document.createElement('div');
+      notif.className = 'notification-banner';
+      notif.style.background = type === 'error' ? '#d9534f' : '#00a884';
+      notif.textContent = message;
+      document.body.appendChild(notif);
+      setTimeout(() => {
+        notif.classList.add('hiding');
+        setTimeout(() => notif.remove(), 300);
+      }, 3000);
+    }
+    
     // Helper function to generate permission error message for users
     // Note: Project name 'g19-chathub' is specific to this project
     function getPermissionErrorMessage() {
@@ -2979,7 +2992,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         document.getElementById('recordAudioStatusBtn').style.display = 'none';
         document.getElementById('stopAudioStatusBtn').style.display = 'inline-block';
       } catch (err) {
-        alert('Microphone access required: ' + err.message);
+        showNotification('Microphone access required: ' + err.message, 'error');
       }
     };
 
@@ -3339,7 +3352,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         loadStatusComments(currentStatusId);
       } catch (err) {
         logger.error('Error adding comment:', err);
-        alert('Failed to add comment');
+        showNotification('Failed to add comment', 'error');
       }
     };
 
@@ -3677,7 +3690,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         window.searchForFriend();
       } catch (err) {
         logger.error('Error sending friend request:', err);
-        alert('Failed to send friend request');
+        showNotification('Failed to send friend request', 'error');
       }
     };
 
@@ -3709,7 +3722,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         loadFriendRequests();
       } catch (err) {
         logger.error('Error accepting friend request:', err);
-        alert('Failed to accept friend request');
+        showNotification('Failed to accept friend request', 'error');
       }
     };
 
@@ -3722,7 +3735,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         loadFriendRequests();
       } catch (err) {
         logger.error('Error declining friend request:', err);
-        alert('Failed to decline friend request');
+        showNotification('Failed to decline friend request', 'error');
       }
     };
 
@@ -3736,7 +3749,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         loadFriends();
       } catch (err) {
         logger.error('Error removing friend:', err);
-        alert('Failed to remove friend');
+        showNotification('Failed to remove friend', 'error');
       }
     };
 
