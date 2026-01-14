@@ -1622,12 +1622,12 @@
 
   <!-- Hidden Audio Elements for Ringtones -->
   <audio id="ringtone" loop style="display: none;">
-    <!-- Using data URI for a simple ringtone sound -->
+    <!-- Using data URI for incoming call ringtone -->
     <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OWhUhELTKXh7q9gGAU1jtPwyX8vBSp7y+7cjTwKEFKs5fCsXRkFOI/U8ch+LgUme8vo3Y09CwxPquPvrWAdBjiP0+/HfS4FJ3vL6N2NPQsL" type="audio/wav">
   </audio>
   <audio id="ringback" loop style="display: none;">
-    <!-- Using data URI for a simple ringback sound -->
-    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OWhUhELTKXh7q9gGAU1jtPwyX8vBSp7y+7cjTwKEFKs5fCsXRkFOI/U8ch+LgUme8vo3Y09CwxPquPvrWAdBjiP0+/HfS4FJ3vL6N2NPQsL" type="audio/wav">
+    <!-- Using data URI for outgoing call ringback (different pattern) -->
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
   </audio>
 
   <script>
@@ -1693,40 +1693,60 @@
     let isVideoEnabled = true;
     let isAudioOnlyMuted = false;
 
-    // Ringtone control functions
+    // Ringtone control functions with cached DOM references
+    const ringtoneAudio = document.getElementById('ringtone');
+    const ringbackAudio = document.getElementById('ringback');
+    
     function playRingtone() {
-      const ringtone = document.getElementById('ringtone');
-      if (ringtone) {
-        ringtone.play().catch(err => logger.error('Error playing ringtone:', err));
+      if (ringtoneAudio) {
+        ringtoneAudio.play().catch(err => logger.error('Error playing ringtone:', err));
       }
     }
 
     function stopRingtone() {
-      const ringtone = document.getElementById('ringtone');
-      if (ringtone) {
-        ringtone.pause();
-        ringtone.currentTime = 0;
+      if (ringtoneAudio) {
+        ringtoneAudio.pause();
+        ringtoneAudio.currentTime = 0;
       }
     }
 
     function playRingback() {
-      const ringback = document.getElementById('ringback');
-      if (ringback) {
-        ringback.play().catch(err => logger.error('Error playing ringback:', err));
+      if (ringbackAudio) {
+        ringbackAudio.play().catch(err => logger.error('Error playing ringback:', err));
       }
     }
 
     function stopRingback() {
-      const ringback = document.getElementById('ringback');
-      if (ringback) {
-        ringback.pause();
-        ringback.currentTime = 0;
+      if (ringbackAudio) {
+        ringbackAudio.pause();
+        ringbackAudio.currentTime = 0;
       }
     }
 
     function stopAllRingtones() {
       stopRingtone();
       stopRingback();
+    }
+
+    // Helper function to get user-friendly error messages
+    function getErrorMessage(err, context) {
+      let errorMsg = '';
+      
+      if (err.code === 'permission-denied') {
+        errorMsg = 'Please check your permissions or try logging in again.';
+      } else if (err.code === 'unavailable') {
+        errorMsg = 'Network error. Please check your connection and try again.';
+      } else if (err.code === 'storage/unauthorized') {
+        errorMsg = 'Permission denied. Please check your access.';
+      } else if (err.code === 'storage/canceled') {
+        errorMsg = 'Upload was cancelled.';
+      } else if (err.code === 'storage/unknown') {
+        errorMsg = 'An unknown error occurred.';
+      } else {
+        errorMsg = err.message || 'Please try again or refresh the page.';
+      }
+      
+      return errorMsg;
     }
 
     window.toggleMuteAudio = function() {
@@ -3590,14 +3610,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         }
       } catch (err) {
         logger.error('Error loading friends:', err);
-        let errorMsg = 'Unable to load friends. ';
-        if (err.code === 'permission-denied') {
-          errorMsg += 'Please check your permissions or try logging in again.';
-        } else if (err.code === 'unavailable') {
-          errorMsg += 'Network error. Please check your connection and try again.';
-        } else {
-          errorMsg += 'Please try refreshing the page.';
-        }
+        const errorMsg = 'Unable to load friends. ' + getErrorMessage(err);
         listEl.innerHTML = `<p style="color: #d9534f; text-align: center; padding: 20px; background: rgba(217, 83, 79, 0.1); border-radius: 8px; margin: 10px;">${errorMsg}</p>`;
       }
     }
@@ -3672,14 +3685,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         }
       } catch (err) {
         logger.error('Error loading friend requests:', err);
-        let errorMsg = 'Unable to load friend requests. ';
-        if (err.code === 'permission-denied') {
-          errorMsg += 'Please check your permissions or try logging in again.';
-        } else if (err.code === 'unavailable') {
-          errorMsg += 'Network error. Please check your connection and try again.';
-        } else {
-          errorMsg += 'Please try refreshing the page.';
-        }
+        const errorMsg = 'Unable to load friend requests. ' + getErrorMessage(err);
         listEl.innerHTML = `<p style="color: #d9534f; text-align: center; padding: 20px; background: rgba(217, 83, 79, 0.1); border-radius: 8px; margin: 10px;">${errorMsg}</p>`;
       }
     }
@@ -3778,14 +3784,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         }
       } catch (err) {
         logger.error('Error searching for friend:', err);
-        let errorMsg = 'Search failed. ';
-        if (err.code === 'permission-denied') {
-          errorMsg += 'Please check your permissions or try logging in again.';
-        } else if (err.code === 'unavailable') {
-          errorMsg += 'Network error. Please check your connection and try again.';
-        } else {
-          errorMsg += 'Please try again or refresh the page.';
-        }
+        const errorMsg = 'Search failed. ' + getErrorMessage(err);
         resultsEl.innerHTML = `<p style="color: #d9534f; text-align: center; padding: 20px; background: rgba(217, 83, 79, 0.1); border-radius: 8px; margin: 10px;">${errorMsg}</p>`;
       }
     };
@@ -4654,17 +4653,7 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
         setTimeout(() => { statusEl.textContent = ''; }, 2000);
       } catch (err) {
         logger.error('Upload error:', err);
-        let errorMsg = 'Upload failed. ';
-        
-        if (err.code === 'storage/unauthorized') {
-          errorMsg += 'Permission denied. Please check your access.';
-        } else if (err.code === 'storage/canceled') {
-          errorMsg += 'Upload was cancelled.';
-        } else if (err.code === 'storage/unknown') {
-          errorMsg += 'An unknown error occurred.';
-        } else {
-          errorMsg += err.message || 'Please try again.';
-        }
+        const errorMsg = 'Upload failed. ' + getErrorMessage(err);
         
         statusEl.textContent = errorMsg;
         statusEl.style.color = '#d9534f';
