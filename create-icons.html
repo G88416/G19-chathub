@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="icon192" width="192" height="192"></canvas>
+<canvas id="icon512" width="512" height="512"></canvas>
+<script>
+function createIcon(canvasId, size) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  
+  // Background
+  ctx.fillStyle = '#00a884';
+  ctx.fillRect(0, 0, size, size);
+  
+  // Chat bubble
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(size * 0.5, size * 0.45, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Chat lines
+  ctx.fillStyle = '#00a884';
+  const lineWidth = size * 0.35;
+  const lineHeight = size * 0.05;
+  const lineY1 = size * 0.35;
+  const lineY2 = size * 0.45;
+  const lineY3 = size * 0.55;
+  const lineX = size * 0.325;
+  
+  ctx.fillRect(lineX, lineY1, lineWidth, lineHeight);
+  ctx.fillRect(lineX, lineY2, lineWidth * 0.8, lineHeight);
+  ctx.fillRect(lineX, lineY3, lineWidth * 0.6, lineHeight);
+  
+  // Download link
+  const link = document.createElement('a');
+  link.download = `icon-${size}.png`;
+  link.href = canvas.toDataURL();
+  link.textContent = `Download ${size}x${size} icon`;
+  link.style.display = 'block';
+  link.style.marginTop = '10px';
+  document.body.appendChild(link);
+}
+
+createIcon('icon192', 192);
+createIcon('icon512', 512);
+</script>
+</body>
+</html>
