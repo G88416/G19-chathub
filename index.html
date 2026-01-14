@@ -1057,6 +1057,16 @@
     .notification-banner.hiding {
       animation: slideUp 0.3s ease;
     }
+    
+    /* Canvas color button hover effects */
+    .color-btn:hover {
+      transform: scale(1.15) !important;
+      box-shadow: 0 0 10px rgba(0, 168, 132, 0.5);
+    }
+    
+    .color-btn:active {
+      transform: scale(1.05) !important;
+    }
   </style>
 </head>
 <body>
@@ -1254,21 +1264,74 @@
           <input type="file" id="statusMediaInput" accept="image/*,video/*" style="display: none;">
           
           <!-- Canvas Tools -->
-          <div id="canvasTools" style="display: none; margin-top: 10px; padding: 10px; background: #202c33; border-radius: 6px;">
-            <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
-              <button onclick="setDrawingColor('#ffffff')" style="width: 30px; height: 30px; background: #ffffff; border: 2px solid #8696a0; border-radius: 50%; cursor: pointer;"></button>
-              <button onclick="setDrawingColor('#ff0000')" style="width: 30px; height: 30px; background: #ff0000; border: 2px solid #8696a0; border-radius: 50%; cursor: pointer;"></button>
-              <button onclick="setDrawingColor('#00ff00')" style="width: 30px; height: 30px; background: #00ff00; border: 2px solid #8696a0; border-radius: 50%; cursor: pointer;"></button>
-              <button onclick="setDrawingColor('#0000ff')" style="width: 30px; height: 30px; background: #0000ff; border: 2px solid #8696a0; border-radius: 50%; cursor: pointer;"></button>
-              <button onclick="setDrawingColor('#ffff00')" style="width: 30px; height: 30px; background: #ffff00; border: 2px solid #8696a0; border-radius: 50%; cursor: pointer;"></button>
-              <button onclick="clearCanvas()" class="auth-btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">
-                <i class="bi bi-eraser"></i> Clear
+          <div id="canvasTools" style="display: none; margin-top: 15px; padding: 15px; background: #202c33; border-radius: 8px;">
+            <!-- Drawing Colors -->
+            <div style="margin-bottom: 12px;">
+              <label style="color: #e9edef; font-size: 0.85rem; display: block; margin-bottom: 8px;">
+                <i class="bi bi-palette"></i> Drawing Color
+              </label>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button onclick="setDrawingColor('#ffffff')" class="color-btn" data-color="#ffffff" style="width: 36px; height: 36px; background: #ffffff; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="White"></button>
+                <button onclick="setDrawingColor('#000000')" class="color-btn" data-color="#000000" style="width: 36px; height: 36px; background: #000000; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Black"></button>
+                <button onclick="setDrawingColor('#ff0000')" class="color-btn" data-color="#ff0000" style="width: 36px; height: 36px; background: #ff0000; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Red"></button>
+                <button onclick="setDrawingColor('#00ff00')" class="color-btn" data-color="#00ff00" style="width: 36px; height: 36px; background: #00ff00; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Green"></button>
+                <button onclick="setDrawingColor('#0000ff')" class="color-btn" data-color="#0000ff" style="width: 36px; height: 36px; background: #0000ff; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Blue"></button>
+                <button onclick="setDrawingColor('#ffff00')" class="color-btn" data-color="#ffff00" style="width: 36px; height: 36px; background: #ffff00; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Yellow"></button>
+                <button onclick="setDrawingColor('#ff00ff')" class="color-btn" data-color="#ff00ff" style="width: 36px; height: 36px; background: #ff00ff; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Magenta"></button>
+                <button onclick="setDrawingColor('#00ffff')" class="color-btn" data-color="#00ffff" style="width: 36px; height: 36px; background: #00ffff; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Cyan"></button>
+                <button onclick="setDrawingColor('#ffa500')" class="color-btn" data-color="#ffa500" style="width: 36px; height: 36px; background: #ffa500; border: 3px solid #8696a0; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="Orange"></button>
+              </div>
+            </div>
+            
+            <!-- Brush Size -->
+            <div style="margin-bottom: 12px;">
+              <label style="color: #e9edef; font-size: 0.85rem; display: block; margin-bottom: 8px;">
+                <i class="bi bi-brush"></i> Brush Size: <span id="brushSizeValue">3</span>px
+              </label>
+              <input type="range" id="brushSizeSlider" min="1" max="20" value="3" onchange="setBrushSize(this.value)" style="width: 100%; accent-color: #00a884;">
+            </div>
+            
+            <!-- Text Overlay -->
+            <div style="margin-bottom: 12px;">
+              <label style="color: #e9edef; font-size: 0.85rem; display: block; margin-bottom: 8px;">
+                <i class="bi bi-fonts"></i> Add Text Overlay
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="canvasTextInput" placeholder="Enter text..." maxlength="100" style="flex: 1; padding: 8px 12px; background: #2a3942; border: 1px solid #2a3942; border-radius: 6px; color: #e9edef; font-size: 0.9rem;">
+                <button onclick="addTextToCanvas()" class="auth-btn-primary" style="padding: 8px 16px; width: auto; margin: 0;">Add</button>
+              </div>
+            </div>
+            
+            <!-- Tools -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+              <button onclick="undoCanvas()" class="auth-btn-secondary" style="padding: 8px 12px; font-size: 0.85rem; margin: 0; width: auto;">
+                <i class="bi bi-arrow-counterclockwise"></i> Undo
               </button>
+              <button onclick="redoCanvas()" class="auth-btn-secondary" style="padding: 8px 12px; font-size: 0.85rem; margin: 0; width: auto;">
+                <i class="bi bi-arrow-clockwise"></i> Redo
+              </button>
+              <button onclick="clearCanvas()" class="auth-btn-secondary" style="padding: 8px 12px; font-size: 0.85rem; margin: 0; width: auto;">
+                <i class="bi bi-eraser"></i> Clear All
+              </button>
+            </div>
+            
+            <!-- Filters -->
+            <div style="margin-top: 12px;">
+              <label style="color: #e9edef; font-size: 0.85rem; display: block; margin-bottom: 8px;">
+                <i class="bi bi-stars"></i> Apply Filter
+              </label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                <button onclick="applyFilter('none')" class="auth-btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; margin: 0; width: auto;">Original</button>
+                <button onclick="applyFilter('grayscale')" class="auth-btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; margin: 0; width: auto;">Grayscale</button>
+                <button onclick="applyFilter('sepia')" class="auth-btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; margin: 0; width: auto;">Sepia</button>
+                <button onclick="applyFilter('brightness')" class="auth-btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; margin: 0; width: auto;">Bright</button>
+                <button onclick="applyFilter('contrast')" class="auth-btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; margin: 0; width: auto;">Contrast</button>
+              </div>
             </div>
           </div>
           
-          <p style="color: #8696a0; font-size: 0.85rem; margin-top: 10px;">
-            <i class="bi bi-info-circle"></i> Click to add photo/video, draw on it, or add text
+          <p style="color: #8696a0; font-size: 0.85rem; margin-top: 10px; text-align: center;">
+            <i class="bi bi-info-circle"></i> Upload a photo to unlock advanced editing tools
           </p>
         </div>
 
@@ -2971,15 +3034,155 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
     };
 
     // Canvas drawing functions
+    let canvasHistory = [];
+    let canvasHistoryStep = -1;
+    let currentBrushSize = 3;
+    let originalImage = null;
+    let currentFilter = 'none';
+    
     window.setDrawingColor = function(color) {
       drawingColor = color;
+      // Update active state on color buttons
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        if (btn.dataset.color === color) {
+          btn.style.borderColor = '#00a884';
+          btn.style.transform = 'scale(1.1)';
+        } else {
+          btn.style.borderColor = '#8696a0';
+          btn.style.transform = 'scale(1)';
+        }
+      });
+    };
+    
+    window.setBrushSize = function(size) {
+      currentBrushSize = parseInt(size);
+      document.getElementById('brushSizeValue').textContent = size;
     };
 
     window.clearCanvas = function() {
-      if (statusCanvasCtx && statusCanvas) {
+      if (statusCanvasCtx && statusCanvas && originalImage) {
+        // Restore original image
         statusCanvasCtx.clearRect(0, 0, statusCanvas.width, statusCanvas.height);
+        statusCanvasCtx.drawImage(originalImage, 0, 0);
+        applyFilter(currentFilter);
+        saveCanvasState();
       }
     };
+    
+    window.undoCanvas = function() {
+      if (canvasHistoryStep > 0) {
+        canvasHistoryStep--;
+        const imageData = canvasHistory[canvasHistoryStep];
+        statusCanvasCtx.putImageData(imageData, 0, 0);
+      }
+    };
+    
+    window.redoCanvas = function() {
+      if (canvasHistoryStep < canvasHistory.length - 1) {
+        canvasHistoryStep++;
+        const imageData = canvasHistory[canvasHistoryStep];
+        statusCanvasCtx.putImageData(imageData, 0, 0);
+      }
+    };
+    
+    window.addTextToCanvas = function() {
+      const textInput = document.getElementById('canvasTextInput');
+      const text = textInput.value.trim();
+      
+      if (!text || !statusCanvasCtx || !statusCanvas) return;
+      
+      // Add text to center of canvas
+      statusCanvasCtx.save();
+      statusCanvasCtx.font = 'bold 36px Arial';
+      statusCanvasCtx.fillStyle = drawingColor;
+      statusCanvasCtx.strokeStyle = drawingColor === '#ffffff' ? '#000000' : '#ffffff';
+      statusCanvasCtx.lineWidth = 2;
+      statusCanvasCtx.textAlign = 'center';
+      statusCanvasCtx.textBaseline = 'middle';
+      
+      // Add outline for better visibility
+      statusCanvasCtx.strokeText(text, statusCanvas.width / 2, statusCanvas.height / 2);
+      statusCanvasCtx.fillText(text, statusCanvas.width / 2, statusCanvas.height / 2);
+      statusCanvasCtx.restore();
+      
+      textInput.value = '';
+      saveCanvasState();
+    };
+    
+    window.applyFilter = function(filter) {
+      if (!statusCanvasCtx || !statusCanvas || !originalImage) return;
+      
+      currentFilter = filter;
+      
+      // Redraw original image
+      statusCanvasCtx.clearRect(0, 0, statusCanvas.width, statusCanvas.height);
+      statusCanvasCtx.drawImage(originalImage, 0, 0);
+      
+      // Apply filter
+      const imageData = statusCanvasCtx.getImageData(0, 0, statusCanvas.width, statusCanvas.height);
+      const data = imageData.data;
+      
+      switch(filter) {
+        case 'grayscale':
+          for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = avg;
+            data[i + 1] = avg;
+            data[i + 2] = avg;
+          }
+          break;
+        case 'sepia':
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+            data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+            data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
+          }
+          break;
+        case 'brightness':
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.min(255, data[i] + 30);
+            data[i + 1] = Math.min(255, data[i + 1] + 30);
+            data[i + 2] = Math.min(255, data[i + 2] + 30);
+          }
+          break;
+        case 'contrast':
+          const factor = 1.5;
+          const intercept = 128 * (1 - factor);
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.min(255, Math.max(0, data[i] * factor + intercept));
+            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] * factor + intercept));
+            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] * factor + intercept));
+          }
+          break;
+      }
+      
+      if (filter !== 'none') {
+        statusCanvasCtx.putImageData(imageData, 0, 0);
+      }
+      
+      saveCanvasState();
+    };
+    
+    function saveCanvasState() {
+      if (!statusCanvasCtx || !statusCanvas) return;
+      
+      // Remove any states after current step (for redo after undo)
+      canvasHistory = canvasHistory.slice(0, canvasHistoryStep + 1);
+      
+      // Add current state
+      const imageData = statusCanvasCtx.getImageData(0, 0, statusCanvas.width, statusCanvas.height);
+      canvasHistory.push(imageData);
+      canvasHistoryStep++;
+      
+      // Limit history to 20 states to save memory
+      if (canvasHistory.length > 20) {
+        canvasHistory.shift();
+        canvasHistoryStep--;
+      }
+    }
 
     function initializeCanvas(image) {
       statusCanvas = document.getElementById('statusCanvas');
@@ -2989,6 +3192,15 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       
       statusCanvasCtx = statusCanvas.getContext('2d');
       statusCanvasCtx.drawImage(image, 0, 0);
+      
+      // Store original image for filters and clear
+      originalImage = image;
+      currentFilter = 'none';
+      
+      // Initialize history
+      canvasHistory = [];
+      canvasHistoryStep = -1;
+      saveCanvasState();
       
       document.getElementById('canvasTools').style.display = 'block';
       
@@ -3007,8 +3219,10 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
     function startDrawing(e) {
       isDrawing = true;
       const rect = statusCanvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const scaleX = statusCanvas.width / rect.width;
+      const scaleY = statusCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
       statusCanvasCtx.beginPath();
       statusCanvasCtx.moveTo(x, y);
     }
@@ -3016,25 +3230,33 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
     function draw(e) {
       if (!isDrawing) return;
       const rect = statusCanvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const scaleX = statusCanvas.width / rect.width;
+      const scaleY = statusCanvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
       statusCanvasCtx.strokeStyle = drawingColor;
-      statusCanvasCtx.lineWidth = 3;
+      statusCanvasCtx.lineWidth = currentBrushSize;
       statusCanvasCtx.lineCap = 'round';
+      statusCanvasCtx.lineJoin = 'round';
       statusCanvasCtx.lineTo(x, y);
       statusCanvasCtx.stroke();
     }
 
     function stopDrawing() {
-      isDrawing = false;
+      if (isDrawing) {
+        isDrawing = false;
+        saveCanvasState();
+      }
     }
 
     function handleTouchStart(e) {
       e.preventDefault();
       const touch = e.touches[0];
       const rect = statusCanvas.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
+      const scaleX = statusCanvas.width / rect.width;
+      const scaleY = statusCanvas.height / rect.height;
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
       isDrawing = true;
       statusCanvasCtx.beginPath();
       statusCanvasCtx.moveTo(x, y);
@@ -3045,11 +3267,14 @@ See QUICK_FIX_PERMISSIONS.md for detailed instructions.`;
       e.preventDefault();
       const touch = e.touches[0];
       const rect = statusCanvas.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
+      const scaleX = statusCanvas.width / rect.width;
+      const scaleY = statusCanvas.height / rect.height;
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
       statusCanvasCtx.strokeStyle = drawingColor;
-      statusCanvasCtx.lineWidth = 3;
+      statusCanvasCtx.lineWidth = currentBrushSize;
       statusCanvasCtx.lineCap = 'round';
+      statusCanvasCtx.lineJoin = 'round';
       statusCanvasCtx.lineTo(x, y);
       statusCanvasCtx.stroke();
     }
